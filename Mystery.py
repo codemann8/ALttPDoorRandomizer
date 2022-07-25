@@ -174,7 +174,7 @@ def roll_settings(weights):
     ret.ow_whirlpool = get_choice('whirlpool_shuffle') == 'on'
     overworld_flute = get_choice('flute_shuffle')
     ret.ow_fluteshuffle = overworld_flute if overworld_flute != 'none' else 'vanilla'
-    ret.shuffle_bonk_drops = get_choice('bonk_drops') == 'on'
+    ret.bonk_drops = get_choice('bonk_drops') == 'on'
     entrance_shuffle = get_choice('entrance_shuffle')
     ret.shuffle = entrance_shuffle if entrance_shuffle != 'none' else 'vanilla'
     overworld_map = get_choice('overworld_map')
