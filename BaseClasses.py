@@ -2899,7 +2899,8 @@ class Spoiler(object):
                          'triforcepool': self.world.treasure_hunt_total,
                          'race': self.world.settings.world_rep['meta']['race'],
                          'code': {p: Settings.make_code(self.world, p) for p in range(1, self.world.players + 1)},
-                         'seed': self.world.seed
+                         'seed': self.world.seed,
+                         'notes': self.world.settings.world_rep['meta']['notes']
                          }
 
         for p in range(1, self.world.players + 1):
@@ -3045,6 +3046,8 @@ class Spoiler(object):
         with open(filename, 'w') as outfile:
             line_width = 35
             outfile.write('ALttP Overworld Randomizer  -  Seed: %s\n\n' % (self.world.seed))
+            if self.metadata['notes']:
+                outfile.write('Notes: %s\n' % ljust(self.world.settings.world_rep['meta']['notes']))
             for k,v in self.metadata["versions"].items():
                 outfile.write((k + ' Version:').ljust(line_width) + '%s\n' % v)
             outfile.write('Filling Algorithm:'.ljust(line_width) + '%s\n' % self.world.algorithm)

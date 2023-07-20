@@ -165,7 +165,7 @@ def main(args, seed=None, fish=None):
             world.player_names[player].append(name)
     logger.info('')
     world.settings = CustomSettings()
-    world.settings.create_from_world(world, args.race)
+    world.settings.create_from_world(world, args)
 
     outfilebase = f'OR_{args.outputname if args.outputname else world.seed}'
 

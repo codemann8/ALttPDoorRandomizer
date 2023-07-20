@@ -221,14 +221,15 @@ class CustomSettings(object):
             return self.file_source['drops']
         return None
 
-    def create_from_world(self, world, race):
+    def create_from_world(self, world, settings):
         self.player_range = range(1, world.players + 1)
         settings_dict, meta_dict = {}, {}
         self.world_rep['meta'] = meta_dict
         meta_dict['players'] = world.players
         meta_dict['algorithm'] = world.algorithm
         meta_dict['seed'] = world.seed
-        meta_dict['race'] = race
+        meta_dict['race'] = settings.race
+        meta_dict['notes'] = settings.notes
         self.world_rep['settings'] = settings_dict
         for p in self.player_range:
             settings_dict[p] = {}
