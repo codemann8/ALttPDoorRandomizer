@@ -2,15 +2,22 @@ import platform, sys, os, subprocess
 import pkg_resources
 from datetime import datetime
 
-def diagpad(str):
-  return str.ljust(len("ALttP Door Randomizer Version") + 5,'.')
+from Main import __version__
+DR_VERSION = __version__
 
-def output(APP_VERSION):
+from OverworldShuffle import __version__
+OWR_VERSION = __version__
+
+def diagpad(str):
+  return str.ljust(len("ALttP Overworld Randomizer Version") + 5,'.')
+
+def output(APP_VERSION=""):
   lines = [
     "ALttP Door Randomizer Diagnostics",
     "=================================",
     diagpad("UTC Time") + str(datetime.utcnow())[:19],
-    diagpad("ALttP Door Randomizer Version") + APP_VERSION,
+    diagpad("ALttP Door Randomizer Version") + DR_VERSION,
+    diagpad("ALttP Overworld Randomizer Version") + OWR_VERSION,
     diagpad("Python Version") + platform.python_version()
   ]
   lines.append(diagpad("OS Version") + "%s %s" % (platform.system(), platform.release()))
