@@ -86,7 +86,7 @@ def run_build():
 
         addDLLs = sorted(list(set(strs)))
 
-        newDLLs.append(*addDLLs)
+        newDLLs += addDLLs
         newDLLs = sorted(list(set(newDLLs)))
 
         dllsManifest.seek(0)
