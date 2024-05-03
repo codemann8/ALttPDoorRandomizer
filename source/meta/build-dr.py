@@ -79,7 +79,7 @@ def run_build():
     else:
       GO = False
     if len(strs) > 0:
-      with open(os.path.join(".","resources","app","meta","manifests","excluded_dlls.json"), "r+", encoding="utf-8") as dllsManifest:
+      with open(os.path.join(".","resources","app","meta","manifests","excluded_dlls.json"), "w+", encoding="utf-8") as dllsManifest:
         dlls = []
         try:
           dlls = json.load(dllsManifest)
