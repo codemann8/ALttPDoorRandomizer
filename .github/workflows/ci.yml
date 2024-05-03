@@ -208,7 +208,7 @@ jobs:
       - name: 🔽Download AppVersion Artifact
         uses: actions/download-artifact@v4.1.7
         with:
-          name: appversion-build-${{ matrix.os-name }}-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
+          name: appversion-build-${{ matrix.os-name }}-py${{ matrix.python-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/build
 
       # download ubuntu archive artifact
@@ -216,21 +216,21 @@ jobs:
         uses: actions/download-artifact@v4.1.7
         with:
           # should run on latest explicit ubuntu version
-          name: archive-ubuntu-22.04-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
+          name: archive-ubuntu-22.04-py${{ matrix.python-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/deploy/linux
 
       # download macos archive artifact
       - name: 🔽Download MacOS Archive Artifact
         uses: actions/download-artifact@v4.1.7
         with:
-          name: archive-macos-latest-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
+          name: archive-macos-latest-py${{ matrix.python-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/deploy/macos
 
       # download windows archive artifact
       - name: 🔽Download Windows Archive Artifact
         uses: actions/download-artifact@v4.1.7
         with:
-          name: archive-windows-latest-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
+          name: archive-windows-latest-py${{ matrix.python-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/deploy/windows
 
       # archive listing
