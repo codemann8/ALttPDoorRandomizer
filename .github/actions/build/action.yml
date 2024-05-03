@@ -90,7 +90,7 @@ runs:
       run: |
         echo "🔼Upload AppVersion Artifact"
     - name: 🔼Upload AppVersion Artifact
-      uses: actions/upload-artifact@v4.3.0
+      uses: actions/upload-artifact@v4.3.3
       with:
         name: appversion-${{ inputs.calling-job }}-${{ inputs.os-name }}-py${{ inputs.python-version }}
         path: ./resources/app/meta/manifests/app_version.txt
@@ -122,17 +122,21 @@ runs:
       run: |
         echo "🔼Upload Problem Children Artifact"
     - name: 🔼Upload Problem Children Artifact
-      uses: actions/upload-artifact@v4.3.0
+      uses: actions/upload-artifact@v4.3.3
       with:
         name: problemchildren-${{ inputs.os-name }}-py${{ inputs.python-version }}
         path: ./resources/app/meta/manifests/excluded_dlls.json
         if-no-files-found: ignore # 'warn' or 'ignore' are also available, defaults to `warn`
     - name: Check for Errored DLLs
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7.0.1
       with:
         script: |
           core.setFailed("Failed to compress DLLs!")
-      if: ${{ steps.build-dr.outputs.error_dlls }} != "" || ${{ steps.build-gui.outputs.error_dlls }} != ""
+      shell: bash
+      run: |
+        echo "${{ steps.build-dr.outputs.error_dlls }}"
+        echo "${{ steps.build-gui.outputs.error_dlls }}"
+      if: ${{ steps.build-dr.outputs.error_dlls }} || ${{ steps.build-gui.outputs.error_dlls }}
 
     # prepare binary artifact for later step
     - name: 💬Prepare Binary Artifact
@@ -152,7 +156,7 @@ runs:
       run: |
         echo "🔼Upload Binary Artifact"
     - name: 🔼Upload Binary Artifact
-      uses: actions/upload-artifact@v4.3.0
+      uses: actions/upload-artifact@v4.3.3
       with:
         name: binary-${{ inputs.os-name }}-py${{ inputs.python-version }}
         path: ${{ steps.parentDir.outputs.parentDir }}/artifact
