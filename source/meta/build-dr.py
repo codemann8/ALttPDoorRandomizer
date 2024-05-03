@@ -19,6 +19,10 @@ else:
     upx_string = ""
 GO = True
 
+def set_output(name, value):
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+        print(f'{name}={value}', file=fh)
+
 def run_build():
     global GO
 
@@ -85,6 +89,9 @@ def run_build():
         newDLLs = dlls
 
         addDLLs = sorted(list(set(strs)))
+
+        if len(addDLLs) > 0:
+            set_output("error_dlls","Failed to compress DLLs!")
 
         newDLLs += addDLLs
         newDLLs = sorted(list(set(newDLLs)))

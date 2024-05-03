@@ -11,6 +11,14 @@ inputs:
     required: true
     description: Python version to install
 
+outputs:
+  dr-error-dlls:
+    description: "DR Error DLLs"
+    value: ${{ steps.build-dr.outputs.error_dlls }}
+  gui-error-dlls:
+    description: "GUI Error DLLs"
+    value: ${{ steps.build-gui.outputs.error_dlls }}
+
 runs:
   using: "composite"
   steps:
@@ -93,6 +101,7 @@ runs:
       run: |
         echo "💬Build Dungeon Randomizer Binary"
     - name: Build Dungeon Randomizer Binary
+      id: build-dr
       shell: bash
       run: |
         pip install pyinstaller
@@ -102,6 +111,7 @@ runs:
       run: |
         echo "💬Build GUI Binary"
     - name: Build GUI Binary
+      id: build-gui
       shell: bash
       run: |
         python -m source.meta.build-gui
@@ -117,6 +127,12 @@ runs:
         name: problemchildren-${{ inputs.os-name }}-py${{ inputs.python-version }}
         path: ./resources/app/meta/manifests/excluded_dlls.json
         if-no-files-found: ignore # 'warn' or 'ignore' are also available, defaults to `warn`
+    - name: Check for Errored DLLs
+      uses: actions/github-script@v3
+      with:
+        script: |
+          core.setFailed("Failed to compress DLLs!")
+      if: ${{ steps.build-dr.outputs.error_dlls }} != "" || ${{ steps.build-gui.outputs.error_dlls }} != ""
 
     # prepare binary artifact for later step
     - name: 💬Prepare Binary Artifact
