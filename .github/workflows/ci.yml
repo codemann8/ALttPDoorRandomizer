@@ -55,6 +55,7 @@ jobs:
       - name: 🧮Print Diagnostics
         shell: bash
         run: |
+          python -m pip install setuptools
           python -m source.meta.run_diags
   # Install/Test
   install-test:
