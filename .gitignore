@@ -13,7 +13,7 @@
 *.bst
 *.wixobj
 *.bat
-build
+/build
 bundle/components.wxs
 dist
 README.html
