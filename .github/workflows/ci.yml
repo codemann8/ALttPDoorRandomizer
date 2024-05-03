@@ -118,7 +118,7 @@ jobs:
       - name: 💿Call Install
         uses: ./.github/actions/install
         with:
-          calling-job: test
+          calling-job: build
           os-name: ${{ matrix.os-name }}
           python-version: ${{ matrix.python-version }}
       # build
@@ -150,7 +150,7 @@ jobs:
     steps:
       # checkout commit
       - name: ✔️Checkout commit
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.1.4
       # install
       - name: 💿Call Install
         uses: ./.github/actions/install
@@ -187,7 +187,7 @@ jobs:
     steps:
       # checkout commit
       - name: ✔️Checkout commit
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.1.4
 
       # install dependencies via pip
       - name: 💿Install Dependencies via pip
@@ -202,14 +202,14 @@ jobs:
 
       # download appversion artifact
       - name: 🔽Download AppVersion Artifact
-        uses: actions/download-artifact@v4.1.1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: appversion-build-${{ matrix.os-name }}-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/build
 
       # download ubuntu archive artifact
       - name: 🔽Download Ubuntu Archive Artifact
-        uses: actions/download-artifact@v4.1.1
+        uses: actions/download-artifact@v4.1.7
         with:
           # should run on latest explicit ubuntu version
           name: archive-ubuntu-22.04-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
@@ -217,14 +217,14 @@ jobs:
 
       # download macos archive artifact
       - name: 🔽Download MacOS Archive Artifact
-        uses: actions/download-artifact@v4.1.1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: archive-macos-latest-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/deploy/macos
 
       # download windows archive artifact
       - name: 🔽Download Windows Archive Artifact
-        uses: actions/download-artifact@v4.1.1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: archive-windows-latest-py${{ matrix.python-version }}-pil${{ matrix.pillow-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/deploy/windows
