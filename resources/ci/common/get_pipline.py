@@ -334,8 +334,11 @@ def install_modules():
     # if there's output
     if ret.stdout.strip():
         process_module_output(ret.stdout.strip().split("\n"))
+        manifests_path = os.path.join(".", "resources", "user", "meta", "manifests")
+        if not os.path.isdir(manifests_path):
+            os.makedirs(manifests_path)
 
-        with open(os.path.join(".", "resources", "user", "meta", "manifests", "settings.json"), "w") as settings:
+        with open(os.path.join(manifests_path, "settings.json"), "w+") as settings:
             settings.write(
                 json.dumps(
                     {
@@ -347,7 +350,7 @@ def install_modules():
                     indent=2
                 )
             )
-        with open(os.path.join(".", "resources", "user", "meta", "manifests", "pipline.txt"), "w") as settings:
+        with open(os.path.join(manifests_path, "pipline.txt"), "w+") as settings:
             settings.write(" ".join(args) + " -m " + PIPEXE)
         SUCCESS = True
 
