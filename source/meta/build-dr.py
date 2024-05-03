@@ -84,7 +84,8 @@ def run_build():
         try:
           dlls = json.load(dllsManifest)
         except JSONDecodeError as e:
-          raise ValueError("Windows DLLs manifest malformed!")
+          dlls = []
+        #   raise ValueError("Windows DLLs manifest malformed!")
 
         newDLLs = dlls
 
