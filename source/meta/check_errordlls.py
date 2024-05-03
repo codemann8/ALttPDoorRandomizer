@@ -6,4 +6,5 @@ if os.path.isfile(error_dlls_path):
     with open(error_dlls_path, "r") as error_dlls_file:
         error_dlls_json = json.load(error_dlls_file)
         if len(error_dlls_json) > 0:
+            print(error_dlls_json)
             exit(1)
