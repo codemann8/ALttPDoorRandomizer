@@ -90,15 +90,17 @@ def run_build():
 
         addDLLs = sorted(list(set(strs)))
 
-        if len(addDLLs) > 0:
+        if addDLLs:
             set_output("error_dlls","Failed to compress DLLs!")
 
         newDLLs += addDLLs
         newDLLs = sorted(list(set(newDLLs)))
 
-        dllsManifest.seek(0)
-        dllsManifest.truncate()
-        dllsManifest.write(json.dumps(sorted(newDLLs), indent=2))
+        if newDLLs:
+            dllsManifest.seek(0)
+            dllsManifest.truncate()
+            dllsManifest.write(json.dumps(sorted(newDLLs), indent=2))
+
         print("Old DLLs")
         print(f"{json.dumps(sorted(dlls))}")
         print("New DLLs")
