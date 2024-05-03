@@ -130,7 +130,9 @@ runs:
     - name: Check for Errored DLLs
       shell: bash
       run: |
+        echo "${{ steps.build-dr.outputs }}"
         echo "${{ steps.build-dr.outputs.error_dlls }}"
+        echo "${{ steps.build-gui.outputs }}"
         echo "${{ steps.build-gui.outputs.error_dlls }}"
     - name: Check for Errored DLLs
       uses: actions/github-script@v7.0.1
