@@ -3,12 +3,7 @@ name: Build
 
 # fire on
 on:
-  push:
-    branches:
-      - DoorDev
-  pull_request:
-    branches:
-      - DoorDev
+  [push,pull_request]
 
 # stuff to do
 jobs:
