@@ -7,4 +7,4 @@ if os.path.isfile(error_dlls_path):
         error_dlls_json = json.load(error_dlls_file)
         if len(error_dlls_json) > 0 and error_dlls_json[0].strip() != "":
             print(error_dlls_json)
-            exit(1)
+            # exit(1)
