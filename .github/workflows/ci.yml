@@ -57,11 +57,12 @@ jobs:
         run: |
           python -m pip install setuptools
           python -m source.meta.run_diags
+
   # Install/Test
   install-test:
     name: 💿/⏱️
     runs-on: ${{ matrix.os-name }}
-    continue-on-error: true
+    continue-on-error: False
 
     strategy:
       matrix:
@@ -96,7 +97,7 @@ jobs:
     name: 💿/🔨
     runs-on: ${{ matrix.os-name }}
     needs: [install-test]
-    # continue-on-error: True
+    continue-on-error: False
 
     strategy:
       matrix:
@@ -162,7 +163,7 @@ jobs:
       - name: 💿Install Dependencies via pip
         shell: bash
         run: |
-          python -m pip install distutils
+          python -m pip install setuptools
       # prepare release
       - name: 📀->📦Prepare Release
         uses: ./.github/actions/release-prepare

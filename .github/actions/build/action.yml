@@ -108,17 +108,15 @@ runs:
 
     # upload binary artifact for later step
     - name: 🔼Upload Problem Children Artifact
-      if: failure()
       shell: bash
       run: |
         echo "🔼Upload Problem Children Artifact"
     - name: 🔼Upload Problem Children Artifact
-      if: failure()
       uses: actions/upload-artifact@v4.3.0
       with:
         name: problemchildren-${{ inputs.os-name }}-py${{ inputs.python-version }}
         path: ./resources/app/meta/manifests/excluded_dlls.json
-        if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
+        if-no-files-found: ignore # 'warn' or 'ignore' are also available, defaults to `warn`
 
     # prepare binary artifact for later step
     - name: 💬Prepare Binary Artifact
