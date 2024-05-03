@@ -131,6 +131,12 @@ runs:
       shell: bash
       run: |
         python ./source/meta/check_errordlls.py
+    - name: Check for Errored DLLs
+      uses: actions/github-script@v7.0.1
+      with:
+        script: |
+          core.setFailed("Failed to compress DLLs!")
+      if: always() && (fromJSON(steps.build-dr.outputs.error_dlls)[0] || fromJSON(steps.build-gui.outputs.error_dlls)[0])
 
     # prepare binary artifact for later step
     - name: 💬Prepare Binary Artifact
