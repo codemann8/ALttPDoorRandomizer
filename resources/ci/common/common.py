@@ -38,7 +38,7 @@ def prepare_env():
   global DEFAULT_REPO_SLUG
   env = {}
 
-	# get app version
+  # get app version
   APP_VERSION = ""
   APP_VERSION_FILE = os.path.join(".","resources","app","meta","manifests","app_version.txt")
   if os.path.isfile(APP_VERSION_FILE):
