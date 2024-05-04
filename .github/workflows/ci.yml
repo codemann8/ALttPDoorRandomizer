@@ -325,21 +325,3 @@ jobs:
           asset_name: ALttPOverworldRandomizer-${{ steps.debug_info.outputs.github_tag }}-windows.zip
           asset_content_type: application/zip
         if: contains(github.ref, 'master')
-
-      # create tag on baserom repo
-      - name: Create Tag on baserom Repo
-        uses: actions/github-script@v7.0.1
-        with:
-          script: |
-            const latest = github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: 'z3randomizer',
-              ref: 'refs/heads/OWMain'
-            })
-            console.log(latest)
-          # github.rest.git.createRef({
-          #   owner: context.repo.owner,
-          #   repo: 'z3randomizer',
-          #   ref: 'refs/tags/v${{ steps.debug_info.outputs.github_tag }}',
-          #   sha: latest.sha
-          # })
