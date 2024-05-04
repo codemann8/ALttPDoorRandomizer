@@ -355,20 +355,20 @@ jobs:
               owner: context.repo.owner,
               repo: 'z3randomizer'
             })
-            let latestTag = "";
+            let latestTag = '';
             for(let ref of latestRefs) {
-              if(ref["ref"].indexOf("/tags/") > -1) {
-                let refParts = ref["ref"].split("/");
+              if(ref["ref"].indexOf('/tags/') > -1) {
+                let refParts = ref['ref'].split('/');
                 for(let refPart of refParts) {
-                  if(substr(refPart,0,1) == "v") {
+                  if(substr(refPart,0,1) == 'v') {
                     latestTag = refPart
                   }
                 }
               }
             }
-            console.log("Git tag:", ${{ steps.debug_info.outputs.github_tag }})
-            console.log("Latest tag:", latestTag)
-            console.log("Latest references:", latestRefs)
+            console.log('Git tag:', '${{ steps.debug_info.outputs.github_tag }}')
+            console.log('Latest tag:', latestTag)
+            console.log('Latest references:', latestRefs)
             if(latestTag != '${{ steps.debug_info.outputs.github_tag }}') {
               github.rest.git.createRef({
                 owner: context.repo.owner,
