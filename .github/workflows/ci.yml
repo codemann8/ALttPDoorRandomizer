@@ -360,7 +360,7 @@ jobs:
               if(ref["ref"].indexOf('/tags/') > -1) {
                 let refParts = ref['ref'].split('/');
                 for(let refPart of refParts) {
-                  if(substr(refPart,0,1) == 'v') {
+                  if(refPart.substring(0,1) == 'v') {
                     latestTag = refPart
                   }
                 }
