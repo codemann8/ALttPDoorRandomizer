@@ -32,7 +32,7 @@ jobs:
               repo: 'z3randomizer',
               ref: 'heads/OWMain'
             })
-            console.log(latest)
+            console.log(latest.data.object.sha)
           # github.rest.git.createRef({
           #   owner: context.repo.owner,
           #   repo: 'z3randomizer',
