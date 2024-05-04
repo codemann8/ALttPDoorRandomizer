@@ -36,7 +36,6 @@ def recurse_for_py_files(names_so_far):
 
 
 hiddenimports = recurse_for_py_files(["source"])
-hiddenimports.append("pkg_resources.py2_warn")        # pyinstaller cried about this
 for hidden in (collect_submodules("pkg_resources")):
     hiddenimports.append(hidden)
 
