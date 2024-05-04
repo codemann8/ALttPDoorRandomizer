@@ -82,6 +82,7 @@ runs:
         OS_NAME: ${{ inputs.os-name }}
         GITHUB_RUN_NUMBER: ${{ steps.set_run_number.outputs.github_run_number }}
       run: |
+        python -m source.classes.appversion
         python ./resources/ci/common/prepare_appversion.py
 
     # upload appversion artifact for later step
