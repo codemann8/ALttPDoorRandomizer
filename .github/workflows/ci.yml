@@ -329,6 +329,7 @@ jobs:
       # create tag on baserom repo
       - name: 🏷️🖳
         uses: actions/github-script@v7.0.1
+        continue-on-error: true
         with:
           # Fine-grained personal access token
           #  https://github.com/settings/tokens?type=beta
@@ -345,14 +346,20 @@ jobs:
           #   value set to copied token
           github-token: ${{ secrets.ALTTPER_TAGGER }}
           script: |
-            const latest = await github.rest.git.getRef({
+            const latestCommit = await github.rest.git.getRef({
               owner: context.repo.owner,
               repo: 'z3randomizer',
               ref: 'heads/OWMain'
             })
+            const latestRefs = await github.rest.git.listMatchingRefs({
+              owner: context.repo.owner,
+              repo: 'z3randomizer',
+              ref: 'v'
+            })
+            console.log(latestRefs)
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: 'z3randomizer',
               ref: 'refs/tags/v${{ steps.debug_info.outputs.github_tag }}',
-              sha: latest.data.object.sha
+              sha: latestCommit.data.object.sha
             })
