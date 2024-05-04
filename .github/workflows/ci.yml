@@ -176,10 +176,6 @@ jobs:
     name: 📀->🚀
     runs-on: ${{ matrix.os-name }}
     needs: [install-release-prepare]
-    permissions:
-      contents: write
-      pull-requests: write
-      repository-projects: write
 
     strategy:
       matrix:
@@ -333,6 +329,8 @@ jobs:
       # create tag on baserom repo
       - name: 🏷️🖳
         uses: actions/github-script@v7.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           script: |
             const latest = await github.rest.git.getRef({
