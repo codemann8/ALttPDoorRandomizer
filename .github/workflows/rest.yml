@@ -30,12 +30,12 @@ jobs:
             const latest = github.rest.git.getRef({
               owner: 'codemann8',
               repo: 'z3randomizer',
-              ref: 'refs/heads/OWMain'
+              ref: 'heads/OWMain'
             })
             console.log(latest)
           # github.rest.git.createRef({
           #   owner: context.repo.owner,
           #   repo: 'z3randomizer',
-          #   ref: 'refs/tags/v${{ steps.debug_info.outputs.github_tag }}',
+          #   ref: 'tags/v${{ steps.debug_info.outputs.github_tag }}',
           #   sha: latest.sha
           # })
