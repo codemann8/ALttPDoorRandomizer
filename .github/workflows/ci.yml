@@ -330,12 +330,20 @@ jobs:
       - name: 🏷️🖳
         uses: actions/github-script@v7.0.1
         with:
+          # Fine-grained personal access token
+          #  https://github.com/settings/tokens?type=beta
+          #  token needs perms:
+          #   actions:         read/write
+          #   commit statuses: read/write
+          #   contents:        read/write
+          #   workflows:       read/write
+          #  copy token
+          # Actions secrets and variables
+          # github.com/<owner>/<repo>/settings/secrets/actions
+          #  repository secret
+          #   name a new secret "ALTTPER_TAGGER"
+          #   value set to copied token
           github-token: ${{ secrets.ALTTPER_TAGGER }}
-          # token needs perms:
-          #  actions:         read/write
-          #  commit statuses: read/write
-          #  contents:        read/write
-          #  workflows:       read/write
           script: |
             const latest = await github.rest.git.getRef({
               owner: context.repo.owner,
