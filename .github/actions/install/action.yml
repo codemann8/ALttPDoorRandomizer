@@ -26,11 +26,6 @@ runs:
       uses: actions/setup-python@v5.1.0
       with:
         python-version: ${{ inputs.python-version }}
-    # create app version
-    - name: Create App Version
-      shell: bash
-      run: |
-        python -m source.classes.appversion
     # install modules via pip
     - name: 💿Install Modules
       shell: bash
