@@ -256,7 +256,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.debug_info.outputs.github_tag }}
+          tag_name: ${{ steps.debug_info.outputs.github_tag }}
           release_name: ALttPOverworldRandomizer ${{ steps.debug_info.outputs.github_tag }}
           body_path: RELEASENOTES.md
           # draft: true
