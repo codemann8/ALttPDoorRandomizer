@@ -121,12 +121,10 @@ def run_build(slug):
             dllsManifest.truncate()
             dllsManifest.write(json.dumps(sorted(newDLLs), indent=2))
 
-        print("Old DLLs")
-        print(f"{json.dumps(sorted(oldDLLs))}")
-        print("Add DLLs")
-        print(f"{json.dumps(sorted(addDLLs))}")
-        print("New DLLs")
-        print(f"{json.dumps(sorted(newDLLs))}")
+        print(f"Old DLLs:  {json.dumps(sorted(oldDLLs))}")
+        print(f"Add DLLs:  {json.dumps(sorted(addDLLs))}")
+        print(f"New DLLs:  {json.dumps(sorted(newDLLs))}")
+        print(f"Diff DLLs: {DIFF_DLLS}")
     print("")
 
 def go_build(slug):
