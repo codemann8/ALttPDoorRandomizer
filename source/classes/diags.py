@@ -11,7 +11,7 @@ OWR_VERSION = __version__
 def diagpad(str):
   return str.ljust(len("ALttP Overworld Randomizer Version") + 5,'.')
 
-def output(APP_VERSION=""):
+def output():
   lines = [
     "ALttP Door Randomizer Diagnostics",
     "=================================",
