@@ -337,6 +337,7 @@ jobs:
               repo: 'z3randomizer',
               ref: 'heads/OWMain'
             })
+            console.log(latest)
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: 'z3randomizer',
