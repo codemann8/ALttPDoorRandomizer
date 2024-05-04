@@ -43,7 +43,9 @@ def prepare_env():
   APP_VERSION_FILE = os.path.join(".","resources","app","meta","manifests","app_version.txt")
   if os.path.isfile(APP_VERSION_FILE):
     with open(APP_VERSION_FILE,"r") as f:
-      APP_VERSION = f.readlines()[0].strip()
+      lines = f.readlines()
+      if len(lines) > 0:
+          APP_VERSION = lines[0].strip()
 
   # ci data
   env["CI_SYSTEM"] = os.getenv("CI_SYSTEM","")
