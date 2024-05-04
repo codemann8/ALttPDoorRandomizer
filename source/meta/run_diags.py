@@ -8,4 +8,3 @@ if __name__ == "__main__":
         print("DIAGNOSTICS")
         print('.' * 70)
     print("\n".join(diags.output()))
-    diags.write_appversion()

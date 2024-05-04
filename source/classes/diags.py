@@ -2,24 +2,6 @@ import platform, sys, os, subprocess
 import pkg_resources
 from datetime import datetime
 
-from Main import __version__
-DR_VERSION = __version__
-
-from OverworldShuffle import __version__
-OWR_VERSION = __version__
-
-  if os.path.isfile(APP_VERSION_FILE):
-    with open(APP_VERSION_FILE,"r") as f:
-      APP_VERSION = f.readlines()[0].strip()
-
-def write_appversion():
-  APP_VERSION = f"[OWR-{OWR_VERSION}][DR-{DR_VERSION}]"
-  APP_VERSION_FILE = os.path.join(".","resources","app","meta","manifests","app_version.txt")
-  with open(APP_VERSION_FILE),"w") as f:
-    f.seek(0)
-    f.truncate()
-    f.write(APP_VERSION)
-
 def diagpad(str):
   return str.ljust(len("ALttP Overworld Randomizer Version") + 5,'.')
 
