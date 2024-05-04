@@ -1,5 +1,5 @@
 '''
-Build DungeonRandomizer.py
+Build Entrypoints
 '''
 import json
 import platform
@@ -18,6 +18,7 @@ if os.path.isdir(os.path.join(".", UPX_DIR)):
 else:
     upx_string = ""
 GO = True
+DIFF_DLLS = False
 
 # set a global var for Actions to try to read
 def set_output(name, value):
@@ -25,14 +26,14 @@ def set_output(name, value):
         print(f'{name}={value}', file=fh)
 
 # build the thing
-def run_build():
+def run_build(slug):
     global GO
 
     print("Building via Python %s" % platform.python_version())
 
     PYINST_EXECUTABLE = "pyinstaller"
     args = [
-        os.path.join("source", "DungeonRandomizer.spec").replace(os.sep, os.sep * 2),
+        os.path.join("source", f"{slug}.spec").replace(os.sep, os.sep * 2),
         upx_string,
         "-y",
         f"--distpath={DEST_DIRECTORY}"
@@ -115,6 +116,7 @@ def run_build():
             set_output("error_dlls","Failed to compress DLLs!")
 
         if diffDLLs:
+            DIFF_DLLS = True
             dllsManifest.seek(0)
             dllsManifest.truncate()
             dllsManifest.write(json.dumps(sorted(newDLLs), indent=2))
@@ -127,8 +129,17 @@ def run_build():
         print(f"{json.dumps(sorted(newDLLs))}")
     print("")
 
+def go_build(slug):
+    slug = slug or ""
+    if slug != "":
+        GO = True
+        while GO:
+            run_build(slug)
+            GO = False
 
 if __name__ == "__main__":
-    while GO:
-        run_build()
-        GO = False
+    go_build("DungeonRandomizer")
+    go_build("Gui")
+    if DIFF_DLLS:
+        print("Had to update Error DLLs list!")
+        exit(1)

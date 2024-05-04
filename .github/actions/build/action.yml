@@ -96,25 +96,15 @@ runs:
         path: ./resources/app/meta/manifests/app_version.txt
 
     # run build.py
-    - name: 💬Build Dungeon Randomizer Binary
+    - name: 💬Build Binaries
       shell: bash
       run: |
-        echo "💬Build Dungeon Randomizer Binary"
-    - name: Build Dungeon Randomizer Binary
-      id: build-dr
+        echo "💬Build Binaries"
+    - name: Build Binaries
       shell: bash
       run: |
         pip install pyinstaller
-        python -m source.meta.build-dr
-    - name: 💬Build GUI Binary
-      shell: bash
-      run: |
-        echo "💬Build GUI Binary"
-    - name: Build GUI Binary
-      id: build-gui
-      shell: bash
-      run: |
-        python -m source.meta.build-gui
+        python -m source.meta.build
 
     # upload binary artifact for later step
     - name: 🔼Upload Problem Children Artifact
@@ -127,10 +117,6 @@ runs:
         name: problemchildren-${{ inputs.os-name }}-py${{ inputs.python-version }}
         path: ./resources/app/meta/manifests/excluded_dlls.json
         if-no-files-found: ignore # 'warn' or 'ignore' are also available, defaults to `warn`
-    - name: Check for Errored DLLs
-      shell: bash
-      run: |
-        python ./source/meta/check_errordlls.py
 
     # prepare binary artifact for later step
     - name: 💬Prepare Binary Artifact
