@@ -367,12 +367,14 @@ jobs:
             }
             console.log('Git tag:', '${{ steps.debug_info.outputs.github_tag }}')
             console.log('Latest tag:', latestTag)
-            console.log('Latest references:', latestRefs)
             if(latestTag != '${{ steps.debug_info.outputs.github_tag }}') {
+              console.log("🟢Creating release tag")
               github.rest.git.createRef({
                 owner: context.repo.owner,
                 repo: 'z3randomizer',
                 ref: 'refs/tags/v${{ steps.debug_info.outputs.github_tag }}',
                 sha: latestCommit.data.object.sha
               })
+            } else {
+              console.log("🟡Not creating release tag")
             }
