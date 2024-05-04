@@ -27,7 +27,7 @@ jobs:
         uses: actions/github-script@v7.0.1
         with:
           script: |
-            const latest = github.rest.git.getRef({
+            const latest = await github.rest.git.getRef({
               owner: 'codemann8',
               repo: 'z3randomizer',
               ref: 'heads/OWMain'
