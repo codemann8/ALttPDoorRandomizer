@@ -2,6 +2,12 @@ import platform, sys, os, subprocess
 import pkg_resources
 from datetime import datetime
 
+from Main import __version__
+DR_VERSION = __version__
+
+from OverworldShuffle import __version__
+OWR_VERSION = __version__
+
 def diagpad(str):
   return str.ljust(len("ALttP Overworld Randomizer Version") + 5,'.')
 
