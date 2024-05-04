@@ -28,14 +28,13 @@ jobs:
         with:
           script: |
             const latest = await github.rest.git.getRef({
-              owner: 'codemann8',
+              owner: context.repo.owner,
               repo: 'z3randomizer',
               ref: 'heads/OWMain'
             })
-            console.log(latest.data.object.sha)
-          # github.rest.git.createRef({
-          #   owner: context.repo.owner,
-          #   repo: 'z3randomizer',
-          #   ref: 'tags/v${{ steps.debug_info.outputs.github_tag }}',
-          #   sha: latest.sha
-          # })
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: 'z3randomizer',
+              ref: 'tags/v${{ steps.debug_info.outputs.github_tag }}',
+              sha: latest.data.object.sha
+            })
