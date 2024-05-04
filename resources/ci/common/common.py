@@ -8,15 +8,28 @@ global DEFAULT_EVENT
 global DEFAULT_REPO_SLUG
 global FILENAME_CHECKS
 global FILESIZE_CHECK
+# GitHub Hosted Runners
+# https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+#  ubuntu:   22.04, 20.04
+#  windows:  2022, 2019
+#  macos:    14, 13, 12, 11
 UBUNTU_VERSIONS = {
-  "latest": "focal",
+  "latest": "jammy",
+  "24.04": "noble",
+  "22.04": "jammy",
   "20.04": "focal",
   "18.04": "bionic",
   "16.04": "xenial"
 }
 DEFAULT_EVENT = "event"
 DEFAULT_REPO_SLUG = "miketrethewey/ALttPDoorRandomizer"
-FILENAME_CHECKS = [ "Gui", "DungeonRandomizer" ]
+FILENAME_CHECKS = [
+  "DungeonRandomizer",
+  "Gui",
+  "MultiClient",
+  "MultiServer",
+  "Mystery"
+]
 FILESIZE_CHECK = (6 * 1024 * 1024) # 6MB
 
 # take number of bytes and convert to string with units measure
