@@ -23,7 +23,7 @@ if not os.path.isdir(os.path.join(".","upx")):
 
   if "osx" not in env["OS_NAME"]:
 
-    print(("🟡Getting UPX: " + UPX_FILE).encoding("utf-8"))
+    print("Getting UPX: " + UPX_FILE)
 
     with open(os.path.join(".",UPX_FILE),"wb") as upx:
 	    UPX_REQ = urllib.request.Request(
