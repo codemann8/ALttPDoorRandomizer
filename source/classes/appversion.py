@@ -7,7 +7,7 @@ from OverworldShuffle import __version__
 OWR_VERSION = __version__
 
 def write_appversion():
-  APP_VERSION = f"[OWR-{OWR_VERSION}][DR-{DR_VERSION}]"
+  APP_VERSION = f"{OWR_VERSION}"
   APP_VERSION_FILE = os.path.join(".","resources","app","meta","manifests","app_version.txt")
   with open(APP_VERSION_FILE,"w") as f:
     f.seek(0)
