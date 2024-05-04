@@ -101,7 +101,8 @@ if len(BUILD_FILENAMES) > 0:
 	# .zip if windows
 	# .tar.gz otherwise
   if len(BUILD_FILENAMES) > 1:
-    ZIP_FILENAME = os.path.join("..","deploy",env["REPO_NAME"])
+    # ZIP_FILENAME = os.path.join("..","deploy",env["REPO_NAME"])
+    ZIP_FILENAME = os.path.join("..","deploy","ALttPOverworldRandomizer")
   else:
     ZIP_FILENAME = os.path.join("..","deploy",os.path.splitext(BUILD_FILENAME)[0])
   if env["OS_NAME"] == "windows":
