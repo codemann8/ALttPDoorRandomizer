@@ -19,10 +19,12 @@ else:
     upx_string = ""
 GO = True
 
+# set a global var for Actions to try to read
 def set_output(name, value):
     with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
         print(f'{name}={value}', file=fh)
 
+# build the thing
 def run_build():
     global GO
 
@@ -59,18 +61,23 @@ def run_build():
       # if p.returncode != 0:
       #   raise CalledProcessError(p.returncode, p.args)
 
+    # check stdout & stderr
     for key in ["stdout","stderr"]:
       if len(ret[key]) > 0:
         for line in ret[key]:
+          # UPX can't compress this file
           if "NotCompressibleException" in line.strip():
             print(line)
             errs.append(line.strip())
+          # print UPX messages
           if "UPX" in line:
             print(line)
+          # try to get DLL filename
           elif "NotCompressibleException" in line.strip():
             strAdd = re.search(r'api-ms-win-(?:[^-]*)-([^-]*)', line.strip()).group(1)
             strs.append(strAdd)
             errs.append(line.strip())
+    # print collected errors
     if len(errs) > 0:
       print("=" * 10)
       print("| ERRORS |")
@@ -78,36 +85,46 @@ def run_build():
       print("\n".join(errs))
     else:
       GO = False
+
+    # if we identified DLLs to ignore
     if len(strs) > 0:
+      # read DLLs manifest that we've already got saved
       with open(os.path.join(".","resources","app","meta","manifests","excluded_dlls.json"), "w+", encoding="utf-8") as dllsManifest:
-        dlls = []
+        oldDLLs = []
         try:
-          dlls = json.load(dllsManifest)
+          oldDLLs = json.load(dllsManifest)
         except JSONDecodeError as e:
-          dlls = []
+          oldDLLs = []
         #   raise ValueError("Windows DLLs manifest malformed!")
 
-        newDLLs = dlls
+        # bucket for new list
+        newDLLs = sorted(list(set(oldDLLs)))
 
+        # items to add
         addDLLs = sorted(list(set(strs)))
 
-        if addDLLs:
-            set_output("error_dlls","Failed to compress DLLs!")
-
+        # add items
         newDLLs += addDLLs
         newDLLs = sorted(list(set(newDLLs)))
 
-        if newDLLs:
+        # if the lists differ, we've gotta update the included list
+        diffDLLs = newDLLs != oldDLLs
+
+        # set a global var for Actions to try to read
+        if diffDLLs:
+            set_output("error_dlls","Failed to compress DLLs!")
+
+        if diffDLLs:
             dllsManifest.seek(0)
             dllsManifest.truncate()
             dllsManifest.write(json.dumps(sorted(newDLLs), indent=2))
 
         print("Old DLLs")
-        print(f"{json.dumps(sorted(dlls))}")
-        print("New DLLs")
-        print(f"{json.dumps(sorted(newDLLs))}")
+        print(f"{json.dumps(sorted(oldDLLs))}")
         print("Add DLLs")
         print(f"{json.dumps(sorted(addDLLs))}")
+        print("New DLLs")
+        print(f"{json.dumps(sorted(newDLLs))}")
     print("")
 
 
