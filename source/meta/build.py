@@ -28,6 +28,7 @@ def set_output(name, value):
 # build the thing
 def run_build(slug):
     global GO
+    global DIFF_DLLS
 
     print("Building via Python %s" % platform.python_version())
 
