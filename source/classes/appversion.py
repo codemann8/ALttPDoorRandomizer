@@ -1,8 +1,5 @@
 import os
 
-from Main import __version__
-DR_VERSION = __version__
-
 from OverworldShuffle import __version__
 OWR_VERSION = __version__
 
