@@ -356,7 +356,7 @@ jobs:
               repo: 'z3randomizer'
             })
             let latestTag = '';
-            for(let ref of latestRefs) {
+            for(let ref of latestRefs.data) {
               if(ref["ref"].indexOf('/tags/') > -1) {
                 let refParts = ref['ref'].split('/');
                 for(let refPart of refParts) {
