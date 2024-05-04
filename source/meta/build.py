@@ -84,7 +84,7 @@ def run_build(slug):
     # print collected errors
     if len(errs) > 0:
       print("=" * 10)
-      print("| ERRORS |")
+      print("| 🔴ERRORS |")
       print("=" * 10)
       print("\n".join(errs))
     else:
@@ -142,5 +142,5 @@ if __name__ == "__main__":
     go_build("DungeonRandomizer")
     go_build("Gui")
     if DIFF_DLLS:
-        print("Had to update Error DLLs list!")
+        print("🔴Had to update Error DLLs list!")
         exit(1)
