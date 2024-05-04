@@ -176,6 +176,10 @@ jobs:
     name: 📀->🚀
     runs-on: ${{ matrix.os-name }}
     needs: [install-release-prepare]
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
 
     strategy:
       matrix:
@@ -327,7 +331,7 @@ jobs:
         if: contains(github.ref, 'master')
 
       # create tag on baserom repo
-      - name: Create Tag on baserom Repo
+      - name: 🏷️🖳
         uses: actions/github-script@v7.0.1
         with:
           script: |
