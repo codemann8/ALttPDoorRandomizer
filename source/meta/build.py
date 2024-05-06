@@ -32,6 +32,15 @@ def run_build(slug):
 
     print(f"Building '{slug}' via Python {platform.python_version()}")
 
+    # get template, mod to do the thing
+    specTemplateFile = open(os.path.join(".","source","Template.spec"))
+    specTemplate = specTemplateFile.read()
+    specTemplateFile.close()
+    with(open(os.path.join(".","source",f"{slug}.spec"), "w")) as specFile:
+        print(f"Writing '{slug}' PyInstaller spec file")
+        thisTemplate = specTemplate.replace("<BINARY_SLUG>", slug)
+        specFile.write(thisTemplate)
+
     PYINST_EXECUTABLE = "pyinstaller"
     args = [
         os.path.join("source", f"{slug}.spec").replace(os.sep, os.sep * 2),
@@ -84,7 +93,7 @@ def run_build(slug):
     # print collected errors
     if len(errs) > 0:
       print("=" * 10)
-      print("| 🔴ERRORS |")
+      print("| ERRORS |")
       print("=" * 10)
       print("\n".join(errs))
     else:
@@ -114,10 +123,6 @@ def run_build(slug):
         # if the lists differ, we've gotta update the included list
         diffDLLs = newDLLs != oldDLLs
 
-        # set a global var for Actions to try to read
-        if diffDLLs:
-            set_output("error_dlls","Failed to compress DLLs!")
-
         if diffDLLs:
             DIFF_DLLS = True
             dllsManifest.seek(0)
@@ -139,8 +144,12 @@ def go_build(slug):
             GO = False
 
 if __name__ == "__main__":
-    go_build("DungeonRandomizer")
-    go_build("Gui")
+    binary_slugs = []
+    #TODO: Make sure we've got the proper binaries that we need
+    with open(os.path.join(".","resources","app","meta","manifests","binaries.json")) as binariesFile:
+        binary_slugs = json.load(binariesFile)
+    for file_slug in binary_slugs:
+        go_build(file_slug)
     if DIFF_DLLS:
         print("🔴Had to update Error DLLs list!")
         exit(1)
