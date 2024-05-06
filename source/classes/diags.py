@@ -8,16 +8,18 @@ DR_VERSION = __version__
 from OverworldShuffle import __version__
 OWR_VERSION = __version__
 
+PROJECT_NAME = "ALttP Overworld Randomizer"
+
 def diagpad(str):
-  return str.ljust(len("ALttP Overworld Randomizer Version") + 5,'.')
+  return str.ljust(len(f"{PROJECT_NAME} Version") + 5,'.')
 
 def output():
   lines = [
-    "ALttP Door Randomizer Diagnostics",
+    f"{PROJECT_NAME} Diagnostics",
     "=================================",
     diagpad("UTC Time") + str(datetime.utcnow())[:19],
     diagpad("ALttP Door Randomizer Version") + DR_VERSION,
-    diagpad("ALttP Overworld Randomizer Version") + OWR_VERSION,
+    diagpad(f"{PROJECT_NAME} Version") + OWR_VERSION,
     diagpad("Python Version") + platform.python_version()
   ]
   lines.append(diagpad("OS Version") + "%s %s" % (platform.system(), platform.release()))

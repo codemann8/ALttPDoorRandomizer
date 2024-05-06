@@ -1,0 +1,34 @@
+# workflow name
+name: 🏷️Tag Repositories
+
+# Fine-grained personal access token
+#  https://github.com/settings/tokens?type=beta
+#  token needs perms:
+#   actions:         read/write
+#   commit statuses: read/write
+#   contents:        read/write
+#   workflows:       read/write
+#  copy token
+# Actions secrets and variables
+# github.com/<owner>/<repo>/settings/secrets/actions
+#  repository secret
+#   name a new secret "ALTTPER_TAGGER"
+#   value set to copied token
+
+# fire on
+on:
+  release:
+    types:
+      - released
+
+jobs:
+  # Tag Baserom
+  tag-baserom:
+    name: 🖳Tag Baserom
+    uses: ./.github/workflows/reusable-repo-tag.yml
+    with:
+      repository: ${{ github.repository_owner }}/z3randomizer
+      ref-name:   heads/OWMain
+      github-tag: ${{ github.event.release.tag_name }}
+    secrets:
+      PAT: ${{ secrets.ALTTPER_TAGGER }}

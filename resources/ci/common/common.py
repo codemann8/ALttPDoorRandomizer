@@ -1,6 +1,11 @@
 import os   # for env vars
 import stat # file statistics
 import sys  # default system info
+try:
+    import distro
+except ModuleNotFoundError as e:
+    pass
+
 from my_path import get_py_path
 
 global UBUNTU_VERSIONS
@@ -13,14 +18,6 @@ global FILESIZE_CHECK
 #  ubuntu:   22.04, 20.04
 #  windows:  2022, 2019
 #  macos:    14, 13, 12, 11
-UBUNTU_VERSIONS = {
-  "latest": "jammy",
-  "24.04": "noble",
-  "22.04": "jammy",
-  "20.04": "focal",
-  "18.04": "bionic",
-  "16.04": "xenial"
-}
 DEFAULT_EVENT = "event"
 DEFAULT_REPO_SLUG = "miketrethewey/ALttPDoorRandomizer"
 FILENAME_CHECKS = [
@@ -116,9 +113,11 @@ def prepare_env():
     OS_VERSION = OS_NAME[OS_NAME.find('-')+1:]
     OS_NAME = OS_NAME[:OS_NAME.find('-')]
     if OS_NAME == "linux" or OS_NAME == "ubuntu":
-      if OS_VERSION in UBUNTU_VERSIONS:
-        OS_VERSION = UBUNTU_VERSIONS[OS_VERSION]
-      OS_DIST = OS_VERSION
+      try:
+        if distro.codename() != "":
+          OS_DIST = distro.codename()
+      except NameError as e:
+        pass
 
   if OS_VERSION == "" and not OS_DIST == "" and not OS_DIST == "notset":
     OS_VERSION = OS_DIST
@@ -131,7 +130,7 @@ def prepare_env():
       # if the app version didn't have the build number, add it
       # set to <app_version>.<build_number>
       if env["BUILD_NUMBER"] not in GITHUB_TAG:
-        GITHUB_TAG += '.' + env["BUILD_NUMBER"]
+        GITHUB_TAG += ".r" + env["BUILD_NUMBER"]
 
   env["GITHUB_TAG"] = GITHUB_TAG
   env["OS_NAME"] = OS_NAME
