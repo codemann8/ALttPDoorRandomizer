@@ -314,7 +314,7 @@ jobs:
       - name: 📝Debug Info
         id: debug_info
         run: |
-          PROJECT_NAME="ALttPDoorRandomizer"
+          PROJECT_NAME="ALttPOverworldRandomizer"
           echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
 
           GITHUB_TAG="$(head -n 1 ../build/app_version.txt)"
