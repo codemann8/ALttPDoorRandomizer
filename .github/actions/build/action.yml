@@ -40,6 +40,17 @@ runs:
       run: |
         python ./resources/ci/common/get_upx.py
 
+    # download appversion artifact
+    - name: 🔽Download AppVersion Artifact
+      shell: bash
+      run: |
+        echo "🔽Download AppVersion Artifact"
+    - name: 🔽Download AppVersion Artifact
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: appversion
+        path: ./resources/app/meta/manifests
+
     # run build.py
     - name: 💬Build Binaries
       shell: bash
