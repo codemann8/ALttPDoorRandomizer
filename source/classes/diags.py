@@ -1,6 +1,9 @@
 import platform, sys, os, subprocess
-import pkg_resources
-from datetime import datetime
+try:
+    import pkg_resources
+except ModuleNotFoundError as e:
+    pass
+import datetime
 
 from Main import __version__
 DR_VERSION = __version__
@@ -17,7 +20,7 @@ def output():
   lines = [
     f"{PROJECT_NAME} Diagnostics",
     "=================================",
-    diagpad("UTC Time") + str(datetime.utcnow())[:19],
+    diagpad("UTC Time") + str(datetime.datetime.now(datetime.UTC))[:19],
     diagpad("ALttP Door Randomizer Version") + DR_VERSION,
     diagpad(f"{PROJECT_NAME} Version") + OWR_VERSION,
     diagpad("Python Version") + platform.python_version()
@@ -44,6 +47,7 @@ def output():
    pkg = pkg.split("==")
    lines.append(diagpad(pkg[0]) + pkg[1])
   '''
+  installed_packages = []
   installed_packages = [str(d) for d in pkg_resources.working_set]   #this doesn't work from the .exe either, but it doesn't crash the program
   installed_packages.sort()
   for pkg in installed_packages:

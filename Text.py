@@ -2,6 +2,8 @@
 from collections import OrderedDict
 import logging
 import re
+import warnings
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 text_addresses = {'Pedestal': (0x180300, 256),
                   'Triforce': (0x180400, 256),
@@ -106,18 +108,18 @@ Triforce_texts = [
     "    Whelp…\n      that  just\n       happened",
     "     Oh  hey…\n        it's you",
     "\n    Wheeeeee!!",
-    "  Time for\n     another one?",
+    "     Time for\n      another one?",
     "  And\n\n         scene",
     "\n     GOT EM!!",
     "\n  THE VALUUUE!!!",
     "    Cool seed,\n\n      right?",
     "\n    We did it!",
     "    Spam those\n      emotes in\n      wilds chat",
-    "\n     O  M  G",
+    "\n       O  M  G",
     " Hello.  Will you\n you be my friend?",
     "     Beetorp\n       was\n         here!",
     "   The Wind Fish\n  will wake soon.\n             Hoot!",
-    "  Meow Meow Meow\n  Meow Meow Meow\n    Oh My God!",
+    "  Meow Meow Meow\n  Meow Meow Meow\n    Oh my god!",
     "    Ahhhhhhhhh\n   Ya ya yaaaah\n    Ya ya yaaah",
     "  .done\n\n  .comment lol",
     "    You get to\n    drink from\n   the firehose",
@@ -645,7 +647,7 @@ class MultiByteCoreTextMapper(object):
             linespace = wrap
             line = lines.pop(0)
 
-            match = re.search('^\{[A-Z0-9_:]+\}$', line)
+            match = re.search(r'^\{[A-Z0-9_:]+\}$', line)
             if match:
                 if line == '{PAGEBREAK}':
                     if lineindex % 3 != 0:
@@ -664,13 +666,13 @@ class MultiByteCoreTextMapper(object):
             while words:
                 word = words.pop(0)
 
-                match = re.search('^(\{[A-Z0-9_:]+\}).*', word)
+                match = re.search(r'^(\{[A-Z0-9_:]+\}).*', word)
                 if match:
                     start_command = match.group(1)
                     outbuf.extend(cls.special_commands[start_command])
                     word = word.replace(start_command, '')
 
-                match = re.search('(\{[A-Z0-9_:]+\})\.?$', word)
+                match = re.search(r'(\{[A-Z0-9_:]+\})\.?$', word)
                 if match:
                     end_command = match.group(1)
                     word = word.replace(end_command, '')

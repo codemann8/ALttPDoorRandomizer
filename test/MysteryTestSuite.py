@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 import multiprocessing
@@ -8,6 +9,16 @@ from collections import OrderedDict
 cpu_threads = multiprocessing.cpu_count()
 py_version = f"{sys.version_info.major}.{sys.version_info.minor}"
 
+PYLINE = "python"
+PIPLINE_PATH = os.path.join(".","resources","user","meta","manifests","pipline.txt")
+if os.path.isfile(PIPLINE_PATH):
+    with open(PIPLINE_PATH) as pipline_file:
+        PYLINE = pipline_file.read().replace("-m pip","").strip()
+
+results = {
+    "errors": [],
+    "success": []
+}
 
 def main(args=None):
     successes = []
@@ -25,7 +36,7 @@ def main(args=None):
 
     def test(testname: str, command: str):
         tests[testname] = [command]
-        basecommand = f"python3.8 Mystery.py --suppress_rom --suppress_meta"
+        basecommand = f"{PYLINE} Mystery.py --suppress_rom --suppress_meta"
 
         def gen_seed():
             taskcommand = basecommand + " " + command
@@ -117,8 +128,21 @@ if __name__ == "__main__":
                         stream.write(error[0] + "\n")
                         stream.write(error[1] + "\n")
                         stream.write(error[2] + "\n\n")
+                        error[2] = error[2].split("\n")
+                        results["errors"].append(error)
 
-    with open("success.txt", "w") as stream:
+    with open("mystery-success.txt", "w") as stream:
         stream.write(str.join("\n", successes))
+        results["success"] = successes
 
-    input("Press enter to continue")
+    num_errors  = len(results["errors"])
+    num_success = len(results["success"])
+    num_total   = num_errors + num_success
+
+    print(f"Errors:  {num_errors}/{num_total}")
+    print(f"Success: {num_success}/{num_total}")
+    print(results)
+
+    if (num_errors/num_total) > (num_success/num_total):
+        # exit(1)
+        pass

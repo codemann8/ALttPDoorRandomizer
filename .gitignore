@@ -44,3 +44,6 @@ venv
 test_games/
 data/sprites/official/selan.1.zspr
 *.zspr
+
+*errors.txt
+*success.txt
