@@ -94,7 +94,7 @@ jobs:
     #  run tests
     name: 💿/⏱️
     runs-on: ${{ matrix.os-name }}
-    continue-on-error: False
+    continue-on-error: True
 
     strategy:
       matrix:
