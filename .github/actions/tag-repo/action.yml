@@ -31,7 +31,7 @@ runs:
           const ref = '${{ inputs.ref-name }}';
           // get git tag
           const gitTag = '${{ inputs.github-tag }}';
-          console.log('Repo Data: ', '${owner}/${repo}@${ref}')
+          console.log('Repo Data: ', `${owner}/${repo}@${ref}`)
           console.log('Git tag:   ', gitTag)
           if(gitTag == '') {
             let msg = 'Result:    🔴No Git Tag sent, aborting!';
