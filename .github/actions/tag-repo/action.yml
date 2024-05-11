@@ -22,7 +22,7 @@ runs:
     - name: 🏷️Tag Repository
       uses: actions/github-script@v7.0.1
       with:
-        github-token: ${{ env.GITHUB_TOKEN }}
+        github-token: ${{ env.FINE_PAT }}
         script: |
           const debug = ${{ inputs.debug }} == "true" || ${{ inputs.debug }} == true;
           const repository = '${{ inputs.repository }}';
