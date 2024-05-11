@@ -40,7 +40,7 @@ jobs:
       - name: 🏷️Tag Repository
         uses: ./.github/actions/tag-repo
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FINE_PAT: ${{ secrets.ALTTPER_TAGGER }}
         with:
           repository: ${{ github.repository_owner }}/z3randomizer
           ref-name:   heads/OWMain
