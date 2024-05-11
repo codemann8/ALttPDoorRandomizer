@@ -25,10 +25,21 @@ jobs:
   # Tag Baserom
   tag-baserom:
     name: 🖳Tag Baserom
-    uses: ./.github/workflows/reusable-repo-tag.yml
-    with:
-      repository: ${{ github.repository_owner }}/z3randomizer
-      ref-name:   heads/OWMain
-      github-tag: ${{ github.event.release.tag_name }}
-    secrets:
-      PAT: ${{ secrets.ALTTPER_TAGGER }}
+    runs-on: ${{ matrix.os-name }}
+    strategy:
+      matrix:
+        os-name: [
+          # ubuntu-latest
+          "ubuntu-22.04"
+        ]
+
+    steps:
+      # call checkout
+      - name: ✔️Checkout commit
+        uses: actions/checkout@v4.1.4
+      - name: 🏷️Tag Repository
+        uses: ./.github/actions/tag-repo
+        with:
+          repository: ${{ github.repository_owner }}/z3randomizer
+          ref-name:   heads/OWMain
+          github-tag: ${{ github.event.release.tag_name }}
