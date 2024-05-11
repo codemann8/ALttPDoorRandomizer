@@ -21,7 +21,7 @@ runs:
     - name: 🏷️Tag Repository
       uses: actions/github-script@v7.0.1
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ env.GITHUB_TOKEN }}
         script: |
           const debug = ${{ inputs.debug }};
           const repository = '${{ inputs.repository }}';
