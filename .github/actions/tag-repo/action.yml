@@ -14,6 +14,7 @@ inputs:
   debug:
     description: "Debug Mode, won't set tag"
     required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -23,7 +24,7 @@ runs:
       with:
         github-token: ${{ env.GITHUB_TOKEN }}
         script: |
-          const debug = ${{ inputs.debug }};
+          const debug = ${{ inputs.debug }} == "true" || ${{ inputs.debug }} == true;
           const repository = '${{ inputs.repository }}';
           const owner = repository.substring(0,repository.indexOf('/'));
           const repo = repository.substring(repository.indexOf('/')+1);
