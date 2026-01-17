@@ -601,6 +601,10 @@ class World(object):
 
         return False
 
+    def add_graph_edge(self, object):
+        if self.graph_streamer:
+            self.graph_streamer.add_edge(object)
+
 
 class CollectionState(object):
 
@@ -1884,6 +1888,11 @@ class Entrance(object):
         self.vanilla = vanilla
         if self not in region.entrances:
             region.entrances.append(self)
+        world = self.parent_region.world if self.parent_region.world else (self.connected_region.world if self.connected_region.world else None)
+        if world:
+            world.add_graph_edge(self)
+        else:
+            x=0
 
     def __str__(self):
         return str(self.__unicode__())

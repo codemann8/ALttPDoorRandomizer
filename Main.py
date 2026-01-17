@@ -35,6 +35,7 @@ from source.item.District import init_districts
 from source.item.FillUtil import create_item_pool_config, massage_item_pool, district_item_pool_config, verify_item_pool_config
 from source.overworld.EntranceShuffle2 import link_entrances_new
 from source.tools.BPS import create_bps_from_data
+from source.tools.GraphExporter import GephiStreamer
 from source.classes.CustomSettings import CustomSettings
 from source.enemizer.DamageTables import DamageTable
 from source.enemizer.Enemizer import randomize_enemies
@@ -498,6 +499,9 @@ def init_world(args, fish):
             if world.customizer and world.customizer.has_setting(player, setting):
                 getattr(world, setting)[player] = world.customizer.get_setting(player, setting)
     
+
+    world.graph_streamer = GephiStreamer()
+    
     return world
 
 
@@ -807,6 +811,7 @@ def copy_world(world):
     ret.damage_table = world.damage_table
     ret.data_tables = world.data_tables  # can be changed...
     ret.settings = world.settings
+    ret.graph_streamer = None
 
     for player in range(1, world.players + 1):
         create_regions(ret, player)
@@ -1031,6 +1036,7 @@ def copy_world_premature(world, player, create_flute_exits=True):
     ret.settings = world.settings
 
     ret.is_premature_copied_world = True
+    ret.graph_streamer = None
 
     create_regions(ret, player)
     update_world_regions(ret, player)
