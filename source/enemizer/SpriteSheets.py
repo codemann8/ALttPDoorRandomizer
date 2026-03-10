@@ -566,13 +566,12 @@ def setup_required_dungeon_groups(sheets, data_tables, limited_run=False):
                                                           0x11a, 0x11c, 0x11f, 0x122})
     sheets[did(7)].add_sprite_to_sheet([75, 77, 57, 54], {0x8, 0x2c, 0x114, 0x115, 0x116})  # big fairies
     if limited_run:
-        sheets[77].sub_groups[3] = 0x50
-        sheets[79].sub_groups[3] = 0x52
         sheets[did(13)].add_sprite_to_sheet([81, None, None, 0x50], {0x55, 0x102, 0x104})  # uncle, sick kid
         sheets[did(15)].add_sprite_to_sheet([79, 77, 74, 80], {0xf4, 0xf5, 0x103, 0x106, 0x118, 0x119})  # more npcs
     else:
         sheets[did(13)].add_sprite_to_sheet([81, None, None, None], {0x55, 0x102, 0x104})  # uncle, sick kid
         sheets[did(15)].add_sprite_to_sheet([79, 77, 74, 80], {0xf4, 0xf5, 0x101, 0x103, 0x106, 0x118, 0x119})  # more npcs
+    sheets[did(14)].add_sprite_to_sheet([71, 73, 76, 80], {0x12, 0x105, 0x10a})  # wisemen
     sheets[did(18)].add_sprite_to_sheet([85, 61, 66, 67], {0x20, 0x30})  # aga alter, aga1
     sheets[did(24)].add_sprite_to_sheet([85, 26, 66, 67], {0xd})  # aga2
     sheets[did(34)].add_sprite_to_sheet([33, 65, 69, 51], {0})  # ganon
