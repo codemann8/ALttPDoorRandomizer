@@ -3,7 +3,7 @@ from Items import ItemFactory
 from BaseClasses import Region, Location, Entrance, RegionType, Terrain, Shop, ShopType, LocationType, PotItem, PotFlags
 from PotShuffle import key_drop_data, vanilla_pots, choose_pots, PotSecretTable
 
-from source.dungeon.EnemyList import setup_enemy_locations, enemy_names
+from source.dungeon.EnemyList import setup_enemy_locations, setup_ow_enemy_locations, enemy_names
 
 
 def create_regions(world, player):
@@ -1241,6 +1241,7 @@ def adjust_locations(world, player):
                 # player address? it is in the shop table
                 index += 1
     setup_enemy_locations(world, player)
+    setup_ow_enemy_locations(world, player)
     # disable forced prize locations
     prize_on_boss = world.prizeshuffle[player] == 'none'
     for l in [name for name, data in location_table.items() if data[2]]:

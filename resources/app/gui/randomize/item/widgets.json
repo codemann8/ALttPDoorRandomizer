@@ -168,7 +168,8 @@
       "options": [
         "none",
         "keys",
-        "underworld"
+        "underworld",
+        "all"
     ]}
   },
   "leftPoolFrame2": {

@@ -10,7 +10,7 @@ from PotShuffle import vanilla_pots
 from Tables import bonk_prize_lookup
 from Items import ItemFactory
 
-from source.dungeon.EnemyList import add_drop_contents
+from source.dungeon.EnemyList import add_drop_contents, add_ow_drop_contents
 from source.overworld.EntranceShuffle2 import exit_ids, door_addresses
 from source.item.FillUtil import trash_items, pot_items
 
@@ -492,8 +492,10 @@ def generate_itempool(world, player):
         create_dynamic_bonkdrop_locations(world, player)
         add_bonkdrop_contents(world, player)
 
-    if world.dropshuffle[player] == 'underworld' and not skip_pool_adjustments:
+    if world.dropshuffle[player] in ['underworld', 'all'] and not skip_pool_adjustments:
         add_drop_contents(world, player)
+    if world.dropshuffle[player] == 'all' and not skip_pool_adjustments:
+        add_ow_drop_contents(world, player)
 
     # modfiy based on start inventory, if any
     modify_pool_for_start_inventory(start_inventory, world, player)

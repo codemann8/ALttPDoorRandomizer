@@ -3714,8 +3714,8 @@ mixed_travel_mode = {"prevent": 0, "allow": 1, "force": 2}
 # intensity is 3 bits (reserves 4-7 levels)
 
 # byte 4: TDDD PPPP (tavern shuffle, drop, pottery)
-# dropshuffle reserves 2 bits, pottery needs 4)
-drop_shuffle_mode = {'none': 0, 'keys': 1, 'underworld': 2}
+# dropshuffle reserves 3 bits, pottery needs 4)
+drop_shuffle_mode = {'none': 0, 'keys': 1, 'underworld': 2, 'all': 3}
 pottery_mode = {'none': 0, 'keys': 2, 'lottery': 3, 'dungeon': 4, 'cave': 5, 'cavekeys': 6, 'reduced': 7,
                 'clustered': 8, 'nonempty': 9}
 

@@ -764,7 +764,7 @@ def patch_rom(world, rom, player, team, is_mystery=False, rom_header=None):
         dr_flags |= DROptions.Fix_EG
     if world.door_type_mode[player] in ['big', 'all', 'chaos'] and world.doorShuffle[player] != 'vanilla':
         dr_flags |= DROptions.BigKeyDoor_Shuffle
-    if world.dropshuffle[player] in ['underworld']:
+    if world.dropshuffle[player] in ['underworld', 'all']:
         dr_flags |= DROptions.EnemyDropIndicator
 
     my_locations = world.get_filled_locations(player)

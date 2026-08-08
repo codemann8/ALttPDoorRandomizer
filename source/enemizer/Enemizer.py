@@ -294,7 +294,7 @@ def exceeds_sprite_limit(limit, sprite):
 
 def randomize_underworld_rooms(data_tables, world, player, custom_uw):
     any_enemy_logic = world.any_enemy_logic[player]
-    enemy_drops_active = world.dropshuffle[player] in ['underworld']
+    enemy_drops_active = world.dropshuffle[player] in ['underworld', 'all']
     specific = setup_specific_requirements(data_tables)
     uw_candidates, uw_sheets, all_sheets = find_candidate_sprites(data_tables, range(65, 124))
     for room_id in range(0, 0x128):
@@ -527,7 +527,7 @@ def randomize_enemies(world, player):
         # The unfiltered maps are still used for enemy placement — placement functions re-check
         # denials at that stage and fall back to random selection for denied slots.
         if world.force_enemy[player]:
-            underworld_drops = world.dropshuffle[player] in ['underworld']
+            underworld_drops = world.dropshuffle[player] in ['underworld', 'all']
             filtered_custom_uw = filter_denied_custom_map(
                 custom_uw, data_tables.uw_enemy_denials, data_tables.uw_enemy_drop_denials, underworld_drops)
             filtered_custom_ow = filter_denied_custom_map(
@@ -634,8 +634,13 @@ def randomize_enemies(world, player):
 
 
 def write_enemy_shuffle_settings(world, player, rom):
-    if world.dropshuffle[player] in ['underworld']:
+    if world.dropshuffle[player] in ['underworld', 'all']:
         rom.write_byte(snes_to_pc(0x368109), 0x01)
+    if world.dropshuffle[player] == 'all':
+        # TODO: Write OW enemy drop data to ROM (drop item tables for LW, DW, and post-Aga LW screens).
+        # OW drop locations use placeholder addresses (see ow_drop_address in EnemyList.py).
+        # ROM patch address(es) and data format for overworld enemy drops are not yet determined.
+        pass
     if world.enemy_shuffle[player] != 'none':
         # enable new mimics
         rom.write_byte(snes_to_pc(0x368105), 0x01)

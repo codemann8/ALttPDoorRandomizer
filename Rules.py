@@ -61,6 +61,7 @@ def set_rules(world, player):
     bomb_rules(world, player)
     pot_rules(world, player)
     drop_rules(world, player)
+    ow_drop_rules(world, player)
     challenge_room_rules(world, player)
 
     if world.custom_goals[player]['ganongoal'] and 'requirements' in world.custom_goals[player]['ganongoal']:
@@ -1183,6 +1184,52 @@ def drop_rules(world, player):
                 if rule.rule_lambda is None:
                     raise Exception(f'Bad rule for enemy drop. Need to inspect this case: {hex(enemy.kind)}')
                 add_rule_new(true_location, rule)
+
+
+def ow_drop_rules(world, player):
+    """Set access rules for OW enemy drop locations when dropshuffle='all'."""
+    if world.dropshuffle[player] != 'all':
+        return
+    from OWEdges import OWTileRegions
+    data_tables = world.data_tables[player]
+
+    def get_region_for_area(area_id):
+        base_id = (area_id - 0x90) if 0x90 <= area_id <= 0xCF else area_id
+        region_cache = world._region_cache.get(player, {})
+        for name in OWTileRegions.inverse.get(base_id, []):
+            if name in region_cache:
+                return region_cache[name]
+        return None
+
+    for area_id, sprite_list in data_tables.ow_enemy_table.items():
+        is_post_aga = 0x90 <= area_id <= 0xCF
+        if is_post_aga:
+            base_area = area_id - 0x90
+            primary_sprites = [s for s in data_tables.ow_enemy_table.get(base_area, [])
+                                if s.location is not None]
+        for sprite in sprite_list:
+            if sprite.location is None:
+                continue
+            true_location = world.get_location(sprite.location.name, player)
+            region = get_region_for_area(area_id)
+            if region is None:
+                continue
+            # Apply the enemy-defeat rule for this sprite
+            defeat_rule = defeat_rule_single(world, player, sprite, region)
+            if defeat_rule.rule_lambda is not None:
+                add_rule_new(true_location, defeat_rule)
+            if is_post_aga:
+                # Secondary (post-Aga) drop: also requires Agahnim beaten
+                add_rule(true_location, lambda state, p=player: state.has_beaten_aga(p))
+                # and requires the player to be capable of defeating all primary screen enemies
+                primary_region = get_region_for_area(base_area)
+                if primary_region is not None:
+                    for primary_sprite in primary_sprites:
+                        pri_rule = defeat_rule_single(world, player, primary_sprite, primary_region)
+                        if pri_rule.rule_lambda is not None:
+                            add_rule_new(true_location, pri_rule)
+
+
 
 
 def ow_inverted_rules(world, player):

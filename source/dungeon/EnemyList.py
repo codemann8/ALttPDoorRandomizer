@@ -2274,7 +2274,7 @@ def find_entrance_ids(region):
 
 
 def valid_drop_location(sprite, index, world, player):
-    if world.dropshuffle[player] == 'underworld':
+    if world.dropshuffle[player] in ['underworld', 'all']:
         if sprite.drops_item and sprite.drop_item_kind in [0xe4, 0xe5]:
             # already has a location
             return False
@@ -2306,6 +2306,65 @@ def create_drop_location(sprite, index, super_tile, world, player):
 # todo: placeholder address
 def drop_address(index, super_tile):
     return 0x7f9000 + super_tile * 2 + (index << 24)
+
+
+# TODO: Replace with actual ROM address once OW drop ROM patching is implemented
+def ow_drop_address(index, area_id):
+    return 0x7fa000 + area_id * 2 + (index << 24)
+
+
+def _get_ow_region_for_area(area_id, ow_tile_regions, world, player):
+    """Return the canonical region name for an OW area, or None if not found."""
+    base_id = (area_id - 0x90) if 0x90 <= area_id <= 0xCF else area_id
+    region_cache = world._region_cache.get(player, {})
+    for region_name in ow_tile_regions.inverse.get(base_id, []):
+        if region_name in region_cache:
+            return region_name
+    return None
+
+
+def valid_ow_drop_location(sprite, world, player):
+    """Return True if this OW sprite should receive a drop location."""
+    if sprite.static or sprite.bonk or sprite.embedded or sprite.never_drop:
+        return False
+    stat = world.data_tables[player].enemy_stats.get(sprite.kind)
+    return stat is not None and stat.drop_flag
+
+
+def create_ow_drop_location(sprite, index, area_id, region_name, world, player):
+    """Create and register a drop location for an OW sprite."""
+    address = ow_drop_address(index, area_id)
+    parent = world.get_region(region_name, player)
+    enemy_name = enemy_names.get(sprite.kind, f'Enemy 0x{sprite.kind:02x}')
+    descriptor = f'Enemy #{index + 1}'
+    is_post_aga = 0x90 <= area_id <= 0xCF
+    state_tag = ' Post-Aga' if is_post_aga else ''
+    modifier = parent.hint_text not in {'a storyteller', 'fairies deep in a cave', 'a spiky hint',
+                                        'a bounty of five items', 'the sick kid', 'Sahasrahla'}
+    hint_text = f'held by a {enemy_name} {"in" if modifier else "near"} {parent.hint_text}{state_tag}'
+    loc_name = f'{region_name} OW{state_tag} {descriptor}'
+    drop_location = Location(player, loc_name, address, hint_text=hint_text, parent=parent,
+                             note=enemy_name)
+    world.dynamic_locations.append(drop_location)
+    drop_location.drop = sprite
+    sprite.location = drop_location
+    drop_location.type = LocationType.Drop
+    parent.locations.append(drop_location)
+
+
+def setup_ow_enemy_locations(world, player):
+    """Create drop locations for OW enemies when dropshuffle='all'."""
+    if world.dropshuffle[player] != 'all':
+        return
+    from OWEdges import OWTileRegions
+    for area_id, sprite_list in world.data_tables[player].ow_enemy_table.items():
+        for index, sprite in enumerate(sprite_list):
+            if not valid_ow_drop_location(sprite, world, player):
+                continue
+            region_name = _get_ow_region_for_area(area_id, OWTileRegions, world, player)
+            if region_name is None:
+                continue
+            create_ow_drop_location(sprite, index, area_id, region_name, world, player)
 
 
 prize_pack_selector = {
@@ -2348,6 +2407,30 @@ def add_drop_contents(world, player):
                     item_name = pack_contents[idx]
                     item_name = 'Rupees (5)' if retro_bow and 'Arrows' in item_name else item_name
                     world.itempool.append(ItemFactory(item_name, player))
+
+
+def add_ow_drop_contents(world, player):
+    """Add prize pack items for OW enemies to the item pool when dropshuffle='all'."""
+    retro_bow = world.bow_mode[player].startswith('retro')
+    index_selector = [0] * 8
+    for area_id, sprite_list in world.data_tables[player].ow_enemy_table.items():
+        for sprite in sprite_list:
+            if sprite.static or sprite.bonk:
+                continue
+            stat = world.data_tables[player].enemy_stats.get(sprite.kind)
+            if stat is None or not stat.drop_flag:
+                continue
+            pack = 0
+            if isinstance(stat.prize_pack, int):
+                pack = stat.prize_pack
+            elif isinstance(stat.prize_pack, tuple):
+                pack = random.choice(stat.prize_pack)
+            pack_contents = prize_pack_selector[pack]
+            idx = index_selector[pack]
+            index_selector[pack] = (idx + 1) % len(pack_contents)
+            item_name = pack_contents[idx]
+            item_name = 'Rupees (5)' if retro_bow and 'Arrows' in item_name else item_name
+            world.itempool.append(ItemFactory(item_name, player))
 
 
 enemy_names = {

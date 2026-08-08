@@ -110,7 +110,8 @@
     "choices" : [
       "none",
       "keys",
-      "underworld"
+      "underworld",
+      "all"
     ]
   },
   "pottery" : {

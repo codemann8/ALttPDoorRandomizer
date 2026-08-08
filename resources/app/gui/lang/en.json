@@ -401,6 +401,7 @@
     "randomizer.item.dropshuffle.none": "None",
     "randomizer.item.dropshuffle.keys": "Small Key Enemies",
     "randomizer.item.dropshuffle.underworld": "Underworld Enemies",
+    "randomizer.item.dropshuffle.all": "All Enemies (Overworld + Underworld)",
     "randomizer.item.keydropshuffle": "Enable Key Drop Shuffle (Legacy)",
 
     "randomizer.item.take_any": "Take Any Caves",
