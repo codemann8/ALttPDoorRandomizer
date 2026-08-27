@@ -90,6 +90,7 @@ def set_rules(world, player):
                 add_rule(location, rule)
             else:
                 add_rule(location, lambda state: state.item_count('Triforce Piece', player) + state.item_count('Power Star', player) >= int(state.world.treasure_hunt_count[player]))
+            break
 
     if (world.flute_mode[player] != 'active' and not world.is_tile_swapped(0x18, player)
             and 'Ocarina (Activated)' not in list(map(str, [i for i in world.precollected_items if i.player == player]))):
@@ -1800,12 +1801,15 @@ def standard_rules(world, player):
                      'Bonk Fairy (Light)', 'Hyrule Castle Main Gate (South)', 'Hyrule Castle Main Gate (North)', 'Hyrule Castle Ledge Drop']:
         add_rule(world.get_entrance(entrance, player), lambda state: state.has('Zelda Delivered', player))
 
-    if world.shuffle_bonk_drops[player]:
-        if not world.is_premature_copied_world:
+    if not world.is_premature_copied_world:
+        for location in world.get_region('Hyrule Castle Courtyard', player).locations:
+            if location.name == 'Murahdahla':
+                add_rule(location, lambda state: state.has('Zelda Delivered', player))
+                break
+
+        if world.shuffle_bonk_drops[player]:
             add_rule(world.get_location('Hyrule Castle Tree', player), lambda state: state.has('Zelda Delivered', player))
             add_rule(world.get_location('Central Bonk Rocks Tree', player), lambda state: state.has('Zelda Delivered', player))
-
-    if not world.is_premature_copied_world:
         loc = world.get_location_unsafe('Hyrule Castle Courtyard Tree Pull', player)
         if loc:
             add_rule(loc, lambda state: state.has('Zelda Delivered', player))
