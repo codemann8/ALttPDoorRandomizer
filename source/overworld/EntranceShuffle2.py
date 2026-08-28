@@ -1108,10 +1108,15 @@ def figure_out_possible_exits(exits):
 
 
 def determine_dungeon_restrictions(avail):
-    check_for_hc = (avail.is_standard() or avail.world.doorShuffle[avail.player] != 'vanilla')
+    # HC/Sanc exits are forced into LW when Sanctuary S&Q still depends on LW
+    # overworld emergence. Relax when DR can place Sanctuary into a LW dungeon
+    # (partitioned/crossed + intensity >= 3, non-standard; see is_sanc_forced_in_hc)
+    # or when Dark Sanctuary is already the S&Q target (inverted / flipped sanc).
+    check_for_hc = avail.is_standard() or avail.world.doorShuffle[avail.player] != 'vanilla'
+    sanc_spawn_relaxed = not avail.is_sanc_forced_in_hc() or avail.world.is_dark_chapel_start(avail.player)
     for check in dungeon_restriction_checks:
         dungeon_exits, drop_regions = check
-        if check_for_hc and any('Hyrule Castle' in x for x in dungeon_exits):
+        if check_for_hc and not sanc_spawn_relaxed and any('Hyrule Castle' in x for x in dungeon_exits):
             avail.same_world_restricted.update({x: 'LightWorld' for x in dungeon_exits})
         else:
             restriction = None
