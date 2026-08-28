@@ -177,13 +177,18 @@
     return data;
   }
 
-  function applyPreset(preset) {
-    state.preset = preset;
-    const now = Math.floor(Date.now() / 1000);
+  const RELATIVE_PRESETS = new Set(["8h", "24h", "7d", "30d"]);
+
+  function refreshTimeWindow() {
+    const preset = state.preset;
     if (preset === "all") {
       state.from = null;
       state.to = null;
-    } else if (preset === "8h") {
+      return;
+    }
+    if (!RELATIVE_PRESETS.has(preset)) return; // custom keeps fixed bounds
+    const now = Math.floor(Date.now() / 1000);
+    if (preset === "8h") {
       state.from = now - 8 * 3600;
       state.to = now;
     } else if (preset === "24h") {
@@ -196,6 +201,11 @@
       state.from = now - 30 * 86400;
       state.to = now;
     }
+  }
+
+  function applyPreset(preset) {
+    state.preset = preset;
+    refreshTimeWindow();
     $$(".presets [data-preset]").forEach((b) => b.classList.toggle("on", b.dataset.preset === preset));
     $("#customRange").hidden = preset !== "custom";
   }
@@ -843,11 +853,69 @@
     };
   }
 
+  function setDrawerOpen(open) {
+    document.documentElement.classList.toggle("drawer-open", open);
+    document.body.classList.toggle("drawer-open", open);
+  }
+
+  function isScrollableY(el) {
+    if (!el || el === document.body || el === document.documentElement) return false;
+    const style = window.getComputedStyle(el);
+    const oy = style.overflowY;
+    if (oy !== "auto" && oy !== "scroll" && oy !== "overlay") return false;
+    return el.scrollHeight > el.clientHeight + 1;
+  }
+
+  function scrollParentY(start) {
+    let el = start;
+    while (el && el !== document.body && el !== document.documentElement) {
+      if (isScrollableY(el)) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function onDrawerWheel(ev) {
+    if (!state.drawer) return;
+    const drawer = $("#drawer");
+    if (!drawer || !drawer.contains(ev.target)) {
+      // Scrim / page behind: never scroll the main document.
+      ev.preventDefault();
+      return;
+    }
+    const scroller = scrollParentY(ev.target) || $("#drawerBody");
+    if (!scroller) {
+      ev.preventDefault();
+      return;
+    }
+    const delta = ev.deltaY;
+    const top = scroller.scrollTop;
+    const max = scroller.scrollHeight - scroller.clientHeight;
+    const atTop = top <= 0;
+    const atBottom = top >= max - 1;
+    if ((delta < 0 && atTop) || (delta > 0 && atBottom) || max <= 0) {
+      // Absorb overscroll so it cannot chain to the page behind.
+      ev.preventDefault();
+    }
+  }
+
+  function onDrawerTouchMove(ev) {
+    if (!state.drawer) return;
+    const drawer = $("#drawer");
+    if (!drawer || !drawer.contains(ev.target)) {
+      ev.preventDefault();
+      return;
+    }
+    // Allow touch scrolling only inside an actual scrollable region.
+    if (!scrollParentY(ev.target)) ev.preventDefault();
+  }
+
   async function openRuns({ title, extra }) {
     state.drawer = { title, extra };
     state.drawerOffset = 0;
     $("#drawer").hidden = false;
     $("#scrim").hidden = false;
+    setDrawerOpen(true);
     $("#drawerTitle").textContent = title;
     await fillDrawer();
   }
@@ -857,6 +925,7 @@
     $("#drawer").hidden = true;
     $("#scrim").hidden = true;
     $("#drawerBody").innerHTML = "";
+    setDrawerOpen(false);
   }
 
   async function fillDrawer() {
@@ -951,6 +1020,7 @@
     const main = $("#main");
     const reqId = ++state._loadReq;
     setReloading(true);
+    refreshTimeWindow();
     try {
       const [health, meta, ov] = await Promise.all([
         api("/api/health"),
@@ -1005,6 +1075,8 @@
     document.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape") closeDrawer();
     });
+    document.addEventListener("wheel", onDrawerWheel, { passive: false, capture: true });
+    document.addEventListener("touchmove", onDrawerTouchMove, { passive: false, capture: true });
   }
 
   bind();

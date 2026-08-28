@@ -289,9 +289,9 @@ def connect_ro(db_path: os.PathLike | str) -> sqlite3.Connection:
     path = Path(db_path).resolve()
     if not path.is_file():
         raise FileNotFoundError(f"DB not found: {path}")
-    uri = path.as_posix()
-    conn = sqlite3.connect(f"file:{uri}?mode=ro", uri=True)
+    conn = sqlite3.connect(str(path), timeout=30)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA query_only = ON;")
     return conn
 
 

@@ -31,6 +31,12 @@ body {
   min-height: 100vh;
   line-height: 1.4;
 }
+/* While the run drawer is open, keep the page behind it from scrolling. */
+html.drawer-open,
+body.drawer-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 
 button, input, select {
   font: inherit;
@@ -310,6 +316,7 @@ canvas.chart {
   z-index: 20;
   display: flex;
   flex-direction: column;
+  overscroll-behavior: contain;
 }
 .drawer-head {
   display: flex;
@@ -317,13 +324,23 @@ canvas.chart {
   gap: 1rem;
   padding: 0.9rem 1rem;
   border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
 }
 .drawer-head h2 { margin: 0; font-size: 1rem; }
-.drawer-body { overflow: auto; padding: 0.8rem 1rem 2rem; flex: 1; }
+.drawer-body {
+  overflow: auto;
+  padding: 0.8rem 1rem 2rem;
+  flex: 1;
+  min-height: 0; /* allow flex child to scroll instead of growing the page */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
 .scrim {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.4);
   z-index: 15;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 .log {
@@ -337,6 +354,7 @@ canvas.chart {
   word-break: break-word;
   max-height: 360px;
   overflow: auto;
+  overscroll-behavior: contain;
 }
 .settings-grid {
   display: grid;

@@ -201,6 +201,9 @@ RULES: List[Rule] = [
     Rule(["do_limited_shuffle", "pop from empty list"], "LimitedShuffle-EmptyChoice", "EntrancePlacement"),
     Rule(["do_mandatory_connections", "ValueError"], "MandatoryConnect-NotInList", "EntrancePlacement"),
     Rule(["do_mandatory_connections", "IndexError"], "MandatoryConnect-EmptyChoice", "EntrancePlacement"),
+    Rule(["do_holes_and_linked_drops", "KeyError", "Pyramid Entrance"], "HolesAndLinkedDrops-PyramidKeyError", "EntrancePlacement"),
+    Rule(["do_holes_and_linked_drops", "ValueError"], "HolesAndLinkedDrops-NotInList", "EntrancePlacement"),
+    Rule(["do_holes_and_linked_drops", "StopIteration"], "HolesAndLinkedDrops-StopIteration", "EntrancePlacement"),
     # Rule("some OW phrase", "OwFailure", "Overworld"),
 
     Rule("Infinite loop detected in flute shuffle", "FluteShuffle-InfiniteLoop", "Overworld"),
