@@ -1182,32 +1182,76 @@ def figure_out_must_exits_cross_world(entrances, exits, avail):
 
 
 def do_same_world_connectors(lw_entrances, dw_entrances, caves, avail):
+    def normalize_cave(cave):
+        return (cave,) if isinstance(cave, str) else tuple(cave)
+
+    def cave_restriction(cave):
+        for x in normalize_cave(cave):
+            if x in avail.same_world_restricted:
+                return avail.same_world_restricted[x]
+        return None
+
+    def restricted_demand(remaining):
+        # exit slots that must still land in LW/DW due to same_world_restricted
+        lw_need = dw_need = 0
+        for cave in remaining:
+            restriction = cave_restriction(cave)
+            if restriction == 'LightWorld':
+                lw_need += len(normalize_cave(cave))
+            elif restriction == 'DarkWorld':
+                dw_need += len(normalize_cave(cave))
+        return lw_need, dw_need
+
+    def pick_cave_index(remaining):
+        # Prefer restricted caves first, then highest exit count.
+        # Unrestricted multi-exit connectors used to place first (size only) and
+        # could spend the last DW/LW slots needed by deferred restricted singles
+        best_i, best_key = 0, None
+        for i, cave in enumerate(remaining):
+            cave_n = normalize_cave(cave)
+            key = (1 if cave_restriction(cave_n) else 0, len(cave_n))
+            if best_key is None or key > best_key:
+                best_key = key
+                best_i = i
+        return best_i
+
+    def choose_unrestricted_target(cave, remaining):
+        # Coin-flip LW/DW, but keep enough slots for remaining restricted demand.
+        size = len(cave)
+        lw_need, dw_need = restricted_demand(remaining)
+
+        def can_use(pool, reserved):
+            return len(pool) - size >= reserved
+
+        lw_ok = can_use(lw_entrances, lw_need)
+        dw_ok = can_use(dw_entrances, dw_need)
+        if lw_ok and dw_ok:
+            return lw_entrances if random.randint(0, 1) == 0 else dw_entrances
+        if lw_ok:
+            return lw_entrances
+        if dw_ok:
+            return dw_entrances
+        if len(lw_entrances) >= size and len(dw_entrances) >= size:
+            return lw_entrances if random.randint(0, 1) == 0 else dw_entrances
+        if len(lw_entrances) >= size:
+            return lw_entrances
+        return dw_entrances
+
     random.shuffle(lw_entrances)
     random.shuffle(dw_entrances)
     random.shuffle(caves)
     while caves:
-        # connect highest-exit-count caves first, prevent issue where we have 2 or 3 exits across worlds left to fill
-        cave_candidate = (None, 0)
-        for i, cave in enumerate(caves):
-            if isinstance(cave, str):
-                cave = (cave,)
-            if len(cave) > cave_candidate[1]:
-                cave_candidate = (i, len(cave))
-        cave = caves.pop(cave_candidate[0])
-
-        if isinstance(cave, str):
-            cave = (cave,)
-        target, restriction = None, None
-        if any(x in avail.same_world_restricted for x in cave):
-            restriction = next(avail.same_world_restricted[x] for x in cave if x in avail.same_world_restricted)
+        cave = normalize_cave(caves.pop(pick_cave_index(caves)))
+        restriction = cave_restriction(cave)
+        if restriction:
             target = lw_entrances if restriction == 'LightWorld' else dw_entrances
-        if target is None:
-            target = lw_entrances if random.randint(0, 1) == 0 else dw_entrances
+        else:
+            target = choose_unrestricted_target(cave, caves)
 
         # check if we can still fit the cave into our target group
         if len(target) < len(cave):
             if restriction:
-                raise Exception('Not enough entrances for restricted cave, algorithm needs revision (main)')
+                raise Exception(f'Not enough entrances for restricted cave, algorithm needs revision')
             # need to use other set
             target = lw_entrances if target is dw_entrances else dw_entrances
 
