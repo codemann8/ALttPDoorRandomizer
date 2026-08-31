@@ -430,6 +430,21 @@ def handle_native_dungeon(location, itemid):
                 return 0x25
     return itemid
 
+def get_prize_pack_name(prize_pack_set):
+    if prize_pack_set[0] == "Small Heart":  # Heart
+        if prize_pack_set[1] == "Fairy":  # Fairy
+            return "LargeVarietyPack"
+        return "HeartsPack"
+    if prize_pack_set[0] == "Rupees (5)":  # RupeeBlue
+        return "RupeesPack"
+    if prize_pack_set[0] == "Single Bomb":  # BombRefill1
+        return "BombsPack"
+    if prize_pack_set[0] == "Small Magic":  # MagicRefillSmall
+        return "SmallVarietyPack"
+    if prize_pack_set[0] == "Big Magic":  # MagicRefillFull
+        return "MagicPack"
+    if prize_pack_set[0] == "Arrows (5)":  # ArrowRefill5
+        return "ArrowsPack"
 
 def patch_rom(world, rom, player, team, is_mystery=False, rom_header=None):
     random.seed(world.rom_seeds[player])
@@ -1094,6 +1109,50 @@ def patch_rom(world, rom, player, team, is_mystery=False, rom_header=None):
     if difficulty.progressive_bow_limit < 2 and world.swords[player] == 'swordless':
         rom.write_bytes(0x180098, [2, overflow_replacement])
 
+    # store drops for spoiler log
+    possible_prizes = {
+        'Small Heart': 0xD8, 'Fairy': 0xE3,
+        'Rupee (1)': 0xD9, 'Rupees (5)': 0xDA, 'Rupees (20)': 0xDB,
+        'Big Magic': 0xE0, 'Small Magic': 0xDF,
+        'Single Bomb': 0xDC, 'Bombs (4)': 0xDD,
+        'Bombs (8)': 0xDE, 'Arrows (5)': 0xE1, 'Arrows (10)': 0xE2
+    }  #weights, if desired 13, 1, 9, 7, 6, 3, 6, 7, 1, 2, 5, 3
+    possible_memory_locations_to_prizes = {v: k for k, v in possible_prizes.items()}
+
+    # store drops for spoiler log
+    player_name = '' if world.players == 1 else str(' (' + world.get_player_names(player) + ')')
+    drops_section = {
+        f'Drops{player_name}': {
+            "PullTree": {
+                "Tier1": possible_memory_locations_to_prizes[world.prizes[player]['pull'][0]],
+                "Tier2": possible_memory_locations_to_prizes[world.prizes[player]['pull'][1]],
+                "Tier3": possible_memory_locations_to_prizes[world.prizes[player]['pull'][2]],
+            },
+            "RupeeCrab": {
+                "Main": possible_memory_locations_to_prizes[world.prizes[player]['crab'][0]],
+                "Final": possible_memory_locations_to_prizes[world.prizes[player]['crab'][1]],
+            },
+            "Stun": possible_memory_locations_to_prizes[world.prizes[player]['stun']],
+            "FishSave": possible_memory_locations_to_prizes[world.prizes[player]['fish']],
+        }
+    }
+    world.spoiler.drops.update(drops_section)
+
+    prize_packs_section = {
+        f'PrizePacks{player_name}': {}
+    }
+    prize_pack_values = list(zip(*[iter(world.prizes[player]['enemies'])] * 8))
+    for group_index, prize_pack_set in enumerate(prize_pack_values, 1):
+        group_name = f'EnemyGroup{group_index}'
+        prize_pack_sprites = [possible_memory_locations_to_prizes[prize] for prize in prize_pack_set]
+        prize_pack_name = get_prize_pack_name(prize_pack_sprites)
+        drop_order = ', '.join(prize_pack_sprites)
+        prize_packs_section[f'PrizePacks{player_name}'][group_name] = {
+            f'PrizePackName': prize_pack_name,
+            f'DropOrder': drop_order,
+        }
+    world.spoiler.prize_packs.update(prize_packs_section)
+
     # set up game internal RNG seed
     for i in range(1024):
         rom.write_byte(0x178000 + i, random.randint(0, 255))
@@ -1636,6 +1695,7 @@ def patch_rom(world, rom, player, team, is_mystery=False, rom_header=None):
     digging_game_rng = random.randint(1, 30)  # set rng for digging game
     rom.write_byte(0x180020, digging_game_rng)
     rom.write_byte(0xEFD95, digging_game_rng)
+    world.spoiler.dig_game_digs[player_name] = digging_game_rng
     glitches_enabled = world.logic[player] in ['owglitches', 'hybridglitches', 'nologic']
     rom.write_byte(0x1800A3, 0x01)  # enable correct world setting behaviour after agahnim kills
     rom.write_byte(0x1800A4, 0x01 if not glitches_enabled else 0x00)  # enable POD EG fix
@@ -2760,7 +2820,12 @@ def write_strings(rom, world, player, team):
 
     # this is what shows after getting the green pendant item in rando
     tt['sahasrahla_quest_have_master_sword'] = Sahasrahla2_texts[random.randint(0, len(Sahasrahla2_texts) - 1)]
-    tt['blind_by_the_light'] = Blind_texts[random.randint(0, len(Blind_texts) - 1)]
+    blind_by_the_light_text = Blind_texts[random.randint(0, len(Blind_texts) - 1)]
+    tt['blind_by_the_light'] = blind_by_the_light_text
+    player_name = '' if world.players == 1 else str(' (' + world.get_player_names(player) + ')')
+    world.spoiler.ingame_texts[player_name] = {
+        'Blind Pun': str(blind_by_the_light_text).replace('\n', ' ')
+    }
 
     if world.goal[player] in ['triforcehunt']:
         tt['ganon_fall_in_alt'] = 'Why are you even here?\n You can\'t even hurt me! Get the Triforce Pieces.'
