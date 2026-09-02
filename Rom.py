@@ -33,6 +33,7 @@ from Items import ItemFactory, prize_item_table
 from source.overworld.EntranceData import door_addresses, ow_prize_table
 from source.overworld.EntranceShuffle2 import exit_ids
 from source.overworld.FluteShuffle import default_flute_connections, flute_data
+from source.overworld.OWMap import apply_ow_map_assets
 from InitialSram import InitialSram
 
 from source.classes.SFX import randomize_sfx, randomize_sfxinstruments, randomize_songinstruments
@@ -580,6 +581,7 @@ def patch_rom(world, rom, player, team, is_mystery=False, rom_header=None):
             rom.write_byte(0x153D00 + cell_id % 0x40, pos)
         for pos, cell_id in enumerate(sum(grid[1], [])):
             rom.write_byte(0x153D40 + cell_id % 0x40, pos)
+        apply_ow_map_assets(rom)  # OW Map GFX ($18C000) + LW/DW tilemaps ($0AC739 / $0AD739)
     elif world.owMixed[player]:
         owFlags |= 0x02
         owFog = 1
