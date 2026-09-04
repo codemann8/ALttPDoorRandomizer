@@ -131,8 +131,10 @@ def link_entrances_new(world, player):
             elif special_shuffle == 'limited':
                 do_limited_shuffle(pool, avail_pool)
             elif special_shuffle == 'limited_lw':
+                assign_remaining_skull_woods_to_limited_pools(avail_pool, mode_cfg)
                 do_limited_shuffle_exclude_drops(pool, avail_pool)
             elif special_shuffle == 'limited_dw':
+                assign_remaining_skull_woods_to_limited_pools(avail_pool, mode_cfg)
                 do_limited_shuffle_exclude_drops(pool, avail_pool, False)
             elif special_shuffle == 'vanilla':
                 do_vanilla_connect(pool, avail_pool)
@@ -1391,6 +1393,36 @@ def handle_skull_woods_entrances(avail, pool):
         else:
             connect_random(entrances, exits, avail, True)
         avail.skull_handled = True
+
+
+def assign_remaining_skull_woods_to_limited_pools(avail, mode_cfg):
+    # if SW drops/doors already locked SW to a world, park Final Section in limited_lw/dw
+    pools = mode_cfg.get('pools') or {}
+    lw_pool = next((p for p in pools.values() if p.get('special') == 'limited_lw'), None)
+    dw_pool = next((p for p in pools.values() if p.get('special') == 'limited_dw'), None)
+    if not lw_pool or not dw_pool:
+        return
+    determine_dungeon_restrictions(avail)
+    restriction = next(
+        (avail.same_world_restricted[ext] for ext in (
+            'Skull Woods First Section Exit',
+            'Skull Woods Second Section Exit (East)',
+            'Skull Woods Second Section Exit (West)',
+            'Skull Woods Final Section Exit',
+        ) if ext in avail.same_world_restricted),
+        None,
+    )
+    if restriction not in ('LightWorld', 'DarkWorld'):
+        return
+    if 'Skull Woods Final Section' not in avail.entrances:
+        return
+    if restriction == 'LightWorld':
+        dest_pool = lw_pool if not avail.inverted else dw_pool
+    else:
+        dest_pool = dw_pool if not avail.inverted else lw_pool
+    dest = dest_pool['entrances']
+    if 'Skull Woods Final Section' not in dest:
+        dest.append('Skull Woods Final Section')
 
 
 def do_fixed_shuffle(avail, entrance_list):
