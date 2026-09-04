@@ -34,6 +34,7 @@ from source.overworld.EntranceData import door_addresses, ow_prize_table
 from source.overworld.EntranceShuffle2 import exit_ids
 from source.overworld.FluteShuffle import default_flute_connections, flute_data
 from source.overworld.OWMap import apply_ow_map_assets
+from source.overworld.OWTileChanges import write_static_map_changes
 from InitialSram import InitialSram
 
 from source.classes.SFX import randomize_sfx, randomize_sfxinstruments, randomize_songinstruments
@@ -46,10 +47,10 @@ from source.enemizer.Enemizer import write_enemy_shuffle_settings
 
 
 JAP10HASH = '03a63945398191337e896e5771f77173'
-RANDOMIZERBASEHASH = '7ce8b9ca676b5f785d55f07881d440f8'
+RANDOMIZERBASEHASH = '4396c648ccd37790a0df07056d2a3629'
 
 limited_run_hashes = {
-    '2604' : 'b2b6df656c715ef25a483c99341c0297',
+    '2604' : '553adaa3571500574185b244718598e6',
 }
 
 class JsonRom(object):
@@ -3132,6 +3133,8 @@ def set_inverted_mode(world, player, rom, inverted_buffer):
     # apply inverted map changes
     for b in range(0x00, len(inverted_buffer)):
         rom.write_byte(0x153A70 + b, inverted_buffer[b])
+
+    write_static_map_changes(rom, world, player)
 
 def patch_shuffled_dark_sanc(world, rom, player):
     dark_sanc = world.get_region('Dark Sanctuary Hint', player)
