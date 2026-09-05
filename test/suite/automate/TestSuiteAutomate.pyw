@@ -41,6 +41,7 @@ import multiprocessing
 import os
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
 from datetime import datetime
@@ -372,7 +373,11 @@ def _preflight_dependencies(log_file: Path | None = None) -> list[str]:
     return errors
 
 
-def _roll_frozen_settings(customizer_path: Path, seed: int | None):
+def _roll_frozen_settings(
+    customizer_path: Path,
+    seed: int | None,
+    temp_dir: Path | str | None = None,
+):
     """
     Build a fixed customizer + settings row for one attempt.
 
@@ -417,12 +422,13 @@ def _roll_frozen_settings(customizer_path: Path, seed: int | None):
             f"or a fixed settings map"
         )
 
-    temp_dir = str(DEFAULT_AUTOMATE_DIR) if DEFAULT_AUTOMATE_DIR.exists() else None
+    if temp_dir is None and DEFAULT_AUTOMATE_DIR.exists():
+        temp_dir = DEFAULT_AUTOMATE_DIR
     fixed_path = make_temp_fixed_customizer(
         player_settings,
         seed=seed,
         algorithm=algorithm if isinstance(algorithm, str) else None,
-        directory=temp_dir,
+        directory=str(temp_dir) if temp_dir is not None else None,
     )
 
     # Apply fixed customizer onto CLI args without Main.init_world (no Rom/bps).
@@ -468,11 +474,186 @@ def _kill_process_tree(pid: int) -> None:
             pass
 
 
+class _WindowsKillJob:
+    """
+    Windows Job Object that kills its members when the handle is closed and can
+    be terminated explicitly on timeout.
+
+    Enables Parallel Task Scheduler runs: each harness owns a job for its
+    generator child, so a 30-minute timeout (or harness exit / TS killing the
+    parent) cannot leave an orphaned multi-GB python.exe behind.
+    """
+
+    def __init__(self) -> None:
+        import ctypes
+        from ctypes import wintypes
+
+        self._ctypes = ctypes
+        self._handle = None
+        self._assigned = False
+
+        JobObjectExtendedLimitInformation = 9
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
+
+        class JOBOBJECT_BASIC_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ("PerProcessUserTimeLimit", wintypes.LARGE_INTEGER),
+                ("PerJobUserTimeLimit", wintypes.LARGE_INTEGER),
+                ("LimitFlags", wintypes.DWORD),
+                ("MinimumWorkingSetSize", ctypes.c_size_t),
+                ("MaximumWorkingSetSize", ctypes.c_size_t),
+                ("ActiveProcessLimit", wintypes.DWORD),
+                ("Affinity", ctypes.POINTER(ctypes.c_ulong)),
+                ("PriorityClass", wintypes.DWORD),
+                ("SchedulingClass", wintypes.DWORD),
+            ]
+
+        class IO_COUNTERS(ctypes.Structure):
+            _fields_ = [
+                ("ReadOperationCount", ctypes.c_ulonglong),
+                ("WriteOperationCount", ctypes.c_ulonglong),
+                ("OtherOperationCount", ctypes.c_ulonglong),
+                ("ReadTransferCount", ctypes.c_ulonglong),
+                ("WriteTransferCount", ctypes.c_ulonglong),
+                ("OtherTransferCount", ctypes.c_ulonglong),
+            ]
+
+        class JOBOBJECT_EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ("BasicLimitInformation", JOBOBJECT_BASIC_LIMIT_INFORMATION),
+                ("IoInfo", IO_COUNTERS),
+                ("ProcessMemoryLimit", ctypes.c_size_t),
+                ("JobMemoryLimit", ctypes.c_size_t),
+                ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                ("PeakJobMemoryUsed", ctypes.c_size_t),
+            ]
+
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.CreateJobObjectW(None, None)
+        if not handle:
+            return
+        info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        ok = kernel32.SetInformationJobObject(
+            handle,
+            JobObjectExtendedLimitInformation,
+            ctypes.byref(info),
+            ctypes.sizeof(info),
+        )
+        if not ok:
+            kernel32.CloseHandle(handle)
+            return
+        self._handle = handle
+
+    @property
+    def active(self) -> bool:
+        return bool(self._handle)
+
+    def assign(self, pid: int) -> bool:
+        if not self._handle or pid is None or pid <= 0:
+            return False
+        ctypes = self._ctypes
+        kernel32 = ctypes.windll.kernel32
+        PROCESS_SET_QUOTA = 0x0100
+        PROCESS_TERMINATE = 0x0001
+        handle = kernel32.OpenProcess(PROCESS_SET_QUOTA | PROCESS_TERMINATE, False, int(pid))
+        if not handle:
+            return False
+        try:
+            if not kernel32.AssignProcessToJobObject(self._handle, handle):
+                return False
+            self._assigned = True
+            return True
+        finally:
+            kernel32.CloseHandle(handle)
+
+    def terminate(self) -> None:
+        if not self._handle:
+            return
+        try:
+            self._ctypes.windll.kernel32.TerminateJobObject(self._handle, 1)
+        except Exception:
+            pass
+
+    def close(self) -> None:
+        """Close the job handle; with KILL_ON_JOB_CLOSE this kills survivors."""
+        if not self._handle:
+            return
+        try:
+            self._ctypes.windll.kernel32.CloseHandle(self._handle)
+        except Exception:
+            pass
+        self._handle = None
+
+
 def _cap_log(log_text: str, limit: int = 50000) -> str:
     if len(log_text) <= limit:
         return log_text
     half = limit // 2
     return log_text[:half] + "\n...\n" + log_text[-half:]
+
+
+def _process_private_bytes(pid: int) -> int | None:
+    """Best-effort private memory bytes for a PID (Windows WorkingSet fallback)."""
+    if pid is None or pid <= 0:
+        return None
+    try:
+        if os.name == "nt":
+            import ctypes
+            from ctypes import wintypes
+
+            process_query_limited_information = 0x1000
+            handle = ctypes.windll.kernel32.OpenProcess(
+                process_query_limited_information, False, int(pid)
+            )
+            if not handle:
+                return None
+            try:
+                class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
+                    _fields_ = [
+                        ("cb", wintypes.DWORD),
+                        ("PageFaultCount", wintypes.DWORD),
+                        ("PeakWorkingSetSize", ctypes.c_size_t),
+                        ("WorkingSetSize", ctypes.c_size_t),
+                        ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                        ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                        ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                        ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                        ("PagefileUsage", ctypes.c_size_t),
+                        ("PeakPagefileUsage", ctypes.c_size_t),
+                        ("PrivateUsage", ctypes.c_size_t),
+                    ]
+
+                counters = PROCESS_MEMORY_COUNTERS_EX()
+                counters.cb = ctypes.sizeof(counters)
+                ok = ctypes.windll.psapi.GetProcessMemoryInfo(
+                    handle, ctypes.byref(counters), counters.cb
+                )
+                if not ok:
+                    return None
+                return int(counters.PrivateUsage or counters.PagefileUsage or 0)
+            finally:
+                ctypes.windll.kernel32.CloseHandle(handle)
+        else:
+            # Linux: Private_Dirty-ish via status VmRSS as a lower bound
+            with open(f"/proc/{pid}/status", "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("VmRSS:"):
+                        parts = line.split()
+                        return int(parts[1]) * 1024
+    except Exception:
+        return None
+    return None
+
+
+def _read_text_file(path: Path | None, limit: int = 200000) -> str:
+    if path is None or not path.is_file():
+        return ""
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            return f.read(limit)
+    except Exception:
+        return ""
 
 
 def _run_one_generation(
@@ -481,6 +662,7 @@ def _run_one_generation(
     outputpath: Path,
     spoiler: str = "full",
     timeout_sec: int = 1800,
+    memory_limit_mb: int = 0,
 ) -> tuple[bool, str]:
     """
     Spawn DungeonRandomizer with a fixed customizer (no mystery re-roll).
@@ -491,6 +673,15 @@ def _run_one_generation(
     by the harness *before* this call (freeze path), so a timeout still records
     the full settings row / code in the DB. A partial spoiler may already exist
     in outputpath from early Main.
+
+    If memory_limit_mb > 0, the child is also killed when its private memory
+    exceeds that many MiB (guards against algorithmic memory runaways that would
+    otherwise thrash the host until the wall-clock timeout).
+
+    On Windows the child is placed in a Job Object with KILL_ON_JOB_CLOSE so
+    Parallel Task Scheduler instances can overlap safely: when this harness
+    exits (timeout handler, crash, or TS stopping the task), the generator
+    cannot survive as an orphan.
 
     stage / error_type are left blank for TestSuiteAutomateClassify.pyw to fill
     later by scanning the log text.
@@ -508,45 +699,134 @@ def _run_one_generation(
         "--outputpath", str(outputpath),
     ]
 
-    popen_kwargs = dict(
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        cwd=str(REPO_ROOT),
-        **_hidden_subprocess_kwargs(),
-    )
-    # On POSIX, start a new session so we can kill the whole group on timeout.
-    if os.name != "nt":
-        popen_kwargs["start_new_session"] = True
-
+    # Capture child output to temp files (not PIPEs) so a thrashing generator
+    # cannot stall the harness timeout path on a full pipe buffer.
+    stdout_path: Path | None = None
+    stderr_path: Path | None = None
+    stdout_f = None
+    stderr_f = None
     proc = None
+    job = None
     try:
+        out_fd, out_name = tempfile.mkstemp(
+            prefix=f"gen_{seed}_", suffix="_stdout.txt", dir=str(outputpath)
+        )
+        err_fd, err_name = tempfile.mkstemp(
+            prefix=f"gen_{seed}_", suffix="_stderr.txt", dir=str(outputpath)
+        )
+        os.close(out_fd)
+        os.close(err_fd)
+        stdout_path = Path(out_name)
+        stderr_path = Path(err_name)
+        stdout_f = open(stdout_path, "wb")
+        stderr_f = open(stderr_path, "wb")
+
+        popen_kwargs = dict(
+            stdout=stdout_f,
+            stderr=stderr_f,
+            cwd=str(REPO_ROOT),
+            **_hidden_subprocess_kwargs(),
+        )
+        # On POSIX, start a new session so we can kill the whole group on timeout.
+        if os.name != "nt":
+            popen_kwargs["start_new_session"] = True
+
         proc = subprocess.Popen(cmd, **popen_kwargs)
-        try:
-            stdout, stderr = proc.communicate(timeout=timeout_sec if timeout_sec > 0 else None)
-        except subprocess.TimeoutExpired:
+        if os.name == "nt":
+            job = _WindowsKillJob()
+            if job.active:
+                job.assign(proc.pid)
+
+        deadline = (
+            time.monotonic() + float(timeout_sec)
+            if timeout_sec and timeout_sec > 0
+            else None
+        )
+        mem_limit_bytes = (
+            int(memory_limit_mb) * 1024 * 1024
+            if memory_limit_mb and memory_limit_mb > 0
+            else 0
+        )
+        poll_interval = 2.0 if mem_limit_bytes else 5.0
+        timed_out = False
+        mem_killed = False
+        peak_mb = 0
+        while proc.poll() is None:
+            if deadline is not None and time.monotonic() >= deadline:
+                timed_out = True
+                break
+            if mem_limit_bytes:
+                usage = _process_private_bytes(proc.pid)
+                if usage:
+                    peak_mb = max(peak_mb, usage // (1024 * 1024))
+                    if usage >= mem_limit_bytes:
+                        mem_killed = True
+                        break
+            time.sleep(poll_interval)
+
+        if timed_out or mem_killed:
+            if job is not None and job.active:
+                job.terminate()
             _kill_process_tree(proc.pid)
-            # Drain any remaining pipes after kill
+            # Brief wait for process to disappear; do not block on pipes.
+            for _ in range(20):
+                if proc.poll() is not None:
+                    break
+                time.sleep(0.25)
             try:
-                stdout, stderr = proc.communicate(timeout=10)
+                stdout_f.flush()
+                stderr_f.flush()
             except Exception:
-                stdout, stderr = "", ""
+                pass
+            stdout = _read_text_file(stdout_path)
+            stderr = _read_text_file(stderr_path)
+            if timed_out:
+                reason = (
+                    f"Generation timed out after {timeout_sec}s "
+                    f"(seed={seed}). Process tree killed.\n"
+                )
+            else:
+                reason = (
+                    f"Generation exceeded memory limit "
+                    f"({memory_limit_mb}MB, peak~{peak_mb}MB, seed={seed}). "
+                    f"Process tree killed.\n"
+                )
             log_text = (
-                f"Generation timed out after {timeout_sec}s "
-                f"(seed={seed}). Process tree killed.\n"
-                f"Settings were frozen before generation; see suite_settings via "
-                f"this run's settings_code. A partial spoiler may exist under "
-                f"{outputpath}.\n"
+                reason
+                + "Settings were frozen before generation; see suite_settings via "
+                + f"this run's settings_code. A partial spoiler may exist under "
+                + f"{outputpath}.\n"
             )
             if stdout:
                 log_text += "\n--- stdout ---\n" + stdout
             if stderr:
                 log_text += "\n--- stderr ---\n" + stderr
             return False, _cap_log(log_text)
+
+        stdout = _read_text_file(stdout_path)
+        stderr = _read_text_file(stderr_path)
     except Exception:
         if proc is not None and proc.poll() is None:
+            if job is not None and job.active:
+                job.terminate()
             _kill_process_tree(proc.pid)
         return False, traceback.format_exc()
+    finally:
+        for fh in (stdout_f, stderr_f):
+            if fh is not None:
+                try:
+                    fh.close()
+                except Exception:
+                    pass
+        if job is not None:
+            # Closing the job handle kills any survivors (KILL_ON_JOB_CLOSE).
+            job.close()
+        for path in (stdout_path, stderr_path):
+            if path is not None:
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
 
     log_text = ""
     if stdout:
@@ -595,6 +875,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     spoiler = getattr(args, "spoiler", "full") or "full"
     # 0 disables the cap; default 1800s = 30 minutes
     timeout_sec = int(getattr(args, "timeout", 1800) or 0)
+    # 0 disables; default 4096MB guards against algorithmic memory runaways
+    memory_limit_mb = int(getattr(args, "memory_limit_mb", 4096) or 0)
     mystery_path = _mystery_path_from_customizer(customizer)
     suite = _sanitize_suite(getattr(args, "suite", None)) or _suite_from_yaml(
         customizer, mystery_path
@@ -603,7 +885,8 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     _log(
         f"Starting run: count={count} suite={suite} spoiler={spoiler} "
-        f"timeout={timeout_sec}s customizer={customizer} db={db_path} out={day_dir}",
+        f"timeout={timeout_sec}s memory_limit_mb={memory_limit_mb} "
+        f"customizer={customizer} db={db_path} out={day_dir}",
         log_file,
     )
 
@@ -619,7 +902,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         try:
             # Freeze settings first so timeout/crash during generate still logs them.
             seed, settings_row, fixed_path, _algo = _roll_frozen_settings(
-                customizer, seed=None
+                customizer, seed=None, temp_dir=day_dir
             )
             success, log_text = _run_one_generation(
                 fixed_path,
@@ -627,6 +910,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                 day_dir,
                 spoiler=spoiler,
                 timeout_sec=timeout_sec,
+                memory_limit_mb=memory_limit_mb,
             )
         except Exception:
             success = False
@@ -733,6 +1017,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=1800,
         help="Max seconds per seed generation before kill + DB failure row "
              "(default: 1800 = 30 minutes; 0 = no limit)",
+    )
+    parser.add_argument(
+        "--memory-limit-mb",
+        type=lambda v: max(int(v), 0),
+        default=4096,
+        help="Kill generation if private memory exceeds this many MiB "
+             "(default: 4096; 0 = no limit). Survives Task Scheduler orphaning "
+             "better than wall-clock timeout alone.",
     )
     parser.add_argument(
         "--store-success-log",

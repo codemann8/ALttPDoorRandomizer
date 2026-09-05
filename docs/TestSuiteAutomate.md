@@ -83,10 +83,11 @@ Common provisional / catch-all values:
 | `NULL` | Not classified yet — run classify or inspect `log` |
 | `Unknown` | Catch-all rule (or legacy); safe to re-run classify without `--force` |
 | `Generate` + `Timeout` | Log contains harness text `Generation timed out after` (default cap 30 min) |
+| `Generate` + `MemoryLimit` | Log contains harness text `Generation exceeded memory limit` (default cap 4096MB) |
 
-### Timeout logs
+### Timeout / memory-limit logs
 
-On timeout the harness kills the process tree and stores a log starting roughly like:
+On timeout or memory cap the harness kills the process tree and stores a log starting roughly like:
 
 ```text
 Generation timed out after 1800s (seed=...). Process tree killed.
@@ -94,7 +95,18 @@ Settings were frozen before generation; see suite_settings via this run's settin
 A partial spoiler may exist under <day_dir>.
 ```
 
-Settings are frozen **before** generation, so timeout rows still have a full `suite_settings` join. A partial spoiler may exist under the daily folder even though generation did not finish.
+```text
+Generation exceeded memory limit (4096MB, peak~....MB, seed=...). Process tree killed.
+```
+
+Settings are frozen **before** generation, so timeout/OOM rows still have a full `suite_settings` join. A partial spoiler may exist under the daily folder even though generation did not finish.
+
+**Task Scheduler / Parallel runs:** Overlapping harness instances (e.g. every 5 minutes while some seeds take longer) are supported. Each generation child is placed in a Windows Job Object with kill-on-close, so:
+
+- the harness `--timeout` (default 30 min) terminates the generator reliably
+- if the harness process itself exits or is stopped, the child cannot survive as an orphan
+
+Keep the task **ExecutionTimeLimit** comfortably above `--timeout` (e.g. 1h when timeout is 30 min) so Task Scheduler does not stop the harness before it can record the timeout row. Optional `--memory-limit-mb` (default 4096) is a second backstop for algorithmic memory runaways.
 
 ### `suite_settings` — decoded settings dimension
 

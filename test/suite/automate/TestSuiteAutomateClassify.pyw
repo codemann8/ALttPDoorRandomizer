@@ -184,8 +184,9 @@ def _match_phrases(match: MatchSpec) -> List[str]:
 
 # Edit this list as you discover new common log phrases.
 RULES: List[Rule] = [
-    # --- Timeouts (harness-written log text) ---
+    # --- Timeouts / resource caps (harness-written log text) ---
     Rule("Generation timed out after", "Timeout", "Generate"),
+    Rule("Generation exceeded memory limit", "MemoryLimit", "Generate"),
     Rule("ModuleNotFoundError", "ModuleNotFound", "Generate"),
     Rule("MemoryError", "MemoryError", "Generate"),
 
