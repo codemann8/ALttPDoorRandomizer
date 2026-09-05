@@ -13,6 +13,7 @@ from UnderworldGlitchRules import underworld_glitches_rules
 
 from source.logic.Rule import RuleFactory
 from source.logic.AccessRule import set_rule, add_rule, and_rule, or_rule, not_rule, TRUE, FALSE, Has, Primitive, Reach
+from source.logic.AccessRule import keep_better_requirement
 from source.dungeon.EnemyList import EnemySprite, Sprite
 from source.enemizer.EnemyLogic import special_rules_check, special_rules_for_region, defeat_rule_single
 from source.enemizer.EnemyLogic import defeat_rule_multiple
@@ -1888,6 +1889,8 @@ def set_bunny_rules(world, player, inverted):
         return can_activate_bunny_pocket(entrance.parent_region)
 
 
+    bunny_rule_cache = {}
+
     def get_rule_to_add(region, location=None, connecting_entrance=None):
         # In OWG, a location can potentially be superbunny-mirror accessible or
         # bunny revival accessible.
@@ -1900,32 +1903,39 @@ def set_bunny_rules(world, player, inverted):
             if not is_link(region):
                 return pearl
 
+        if world.logic[player] in ['owglitches', 'hybridglitches']:
+            cache_key = (region.name, location.name if location else None)
+        else:
+            cache_key = (region.name, None)
+        cached = bunny_rule_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         # in this case we are mixed region.
         # we collect possible options.
 
         # The base option is having the moon pearl
         possible_options = [pearl]
 
-        # We will search entrances recursively until we find
-        # one that leads to an exclusively light world region
-        # for each such entrance a new option is added that consist of:
-        #    a) being able to reach it, and
-        #    b) being able to access all entrances from there to `region`
-        queue = deque([(region, [], {region}, [region])])
-        seen_sets = set([frozenset({region})])
+        # Walk parent entrances until we reach a region where the player is Link
+        # (not a bunny), i.e. a no-pearl way into this mixed region. Each step
+        # ANDs that edge's requirement onto the path. Skip a path when it is not
+        # less restrictive than one already found for the same region.
+        arrivals = {region: [(frozenset(), [])]}
+        queue = deque([(region, [], frozenset())])
         while queue:
-            (current, path, seen, region_path) = queue.popleft()
+            (current, path, atoms) = queue.popleft()
             for entrance in current.entrances:
                 if entrance.door and entrance.door.blocked:
                     continue
                 new_region = entrance.parent_region
-                new_seen = seen.union({new_region})
-                if new_region.type in (RegionType.Cave, RegionType.Dungeon) and new_seen in seen_sets:
-                    continue
                 edge_rule = entrance.verbose_rule
+                if edge_rule is FALSE:
+                    continue
                 new_path = path if edge_rule is TRUE else path + [edge_rule]
-                new_region_path = region_path + [new_region]
-                seen_sets.add(frozenset(new_seen))
+                new_atoms = atoms if edge_rule is TRUE else atoms | edge_rule.atoms()
+                if ('false',) in new_atoms:
+                    continue
                 if not is_link(new_region):
                     if world.logic[player] in ['owglitches', 'hybridglitches']:
                         # Is this a bunny pocketable entrance?
@@ -1969,11 +1979,14 @@ def set_bunny_rules(world, player, inverted):
                         continue
                 if is_bunny(new_region):
                     # todo: if not owg or hmg and entrance is in bunny_impassible_doors, then skip this nonsense?
-                    queue.append((new_region, new_path, new_seen, new_region_path))
+                    if keep_better_requirement(arrivals, new_region, new_atoms, new_path):
+                        queue.append((new_region, new_path, new_atoms))
                 else:
                     # we have reached pure light world, so we have a new possible option
                     possible_options.append(path_to_access_rule(new_path, entrance))
-        return options_to_access_rule(possible_options)
+        result = options_to_access_rule(possible_options)
+        bunny_rule_cache[cache_key] = result
+        return result
 
     # Add requirements for bunny-impassible caves if they occur in the light world
     for region in [world.get_region(name, player) for name in bunny_impassable_caves]:

@@ -36,6 +36,14 @@ class AccessRule(object):
     def flatten(self):
         return self
 
+    def atoms(self):
+        """Hashable AND-set of this rule, for dominance checks.
+
+        Empty means always true. A is easier than B when a.atoms() <= b.atoms().
+        OR nodes are a single blob so we do not DNF-expand.
+        """
+        return frozenset({('opaque', id(self))})
+
     def compile(self):
         raise NotImplementedError
 
@@ -68,6 +76,9 @@ class TrueRule(AccessRule):
     def compile(self):
         return true_fn
 
+    def atoms(self):
+        return frozenset()
+
     def __str__(self):
         return 'True'
 
@@ -83,6 +94,9 @@ class FalseRule(AccessRule):
 
     def compile(self):
         return false_fn
+
+    def atoms(self):
+        return frozenset({('false',)})
 
     def __str__(self):
         return 'False'
@@ -105,6 +119,9 @@ class Opaque(AccessRule):
 
     def compile(self):
         return self.fn
+
+    def atoms(self):
+        return frozenset({('opaque', id(self.fn))})
 
     def __str__(self):
         name = getattr(self.fn, '__name__', None) or repr(self.fn)
@@ -129,6 +146,9 @@ class Has(AccessRule):
             return lambda state, item=item, player=player: state.has(item, player)
         return lambda state, item=item, player=player, count=count: state.has(item, player, count)
 
+    def atoms(self):
+        return frozenset({('has', self.item, self.player, self.count)})
+
     def __str__(self):
         if self.count == 1:
             return f'has {self.item}'
@@ -152,6 +172,14 @@ class Primitive(AccessRule):
         name, args, kwargs = self.method_name, self.args, self.kwargs
         return lambda state, name=name, args=args, kwargs=kwargs: getattr(state, name)(*args, **kwargs)
 
+    def atoms(self):
+        return frozenset({(
+            'prim',
+            self.method_name,
+            tuple(_atom_value(a) for a in self.args),
+            tuple(sorted((k, _atom_value(v)) for k, v in self.kwargs.items())),
+        )})
+
     def __str__(self):
         parts = [repr(a) for a in self.args]
         parts.extend(f'{k}={v!r}' for k, v in self.kwargs.items())
@@ -174,6 +202,9 @@ class Reach(AccessRule):
         spot, hint, player = self.spot, self.resolution_hint, self.player
         return lambda state, spot=spot, hint=hint, player=player: state.can_reach(spot, hint, player)
 
+    def atoms(self):
+        return frozenset({('reach', _atom_value(self.spot), self.resolution_hint, self.player)})
+
     def __str__(self):
         return f'canReach {self.spot}'
 
@@ -194,6 +225,12 @@ class AndRule(AccessRule):
     def compile(self):
         return _compile_and(self.rules)
 
+    def atoms(self):
+        combined = frozenset()
+        for rule in self.rules:
+            combined |= rule.atoms()
+        return combined
+
     def __str__(self):
         return '(' + ' and '.join(str(r) for r in self.rules) + ')'
 
@@ -213,6 +250,9 @@ class OrRule(AccessRule):
 
     def compile(self):
         return _compile_or(self.rules)
+
+    def atoms(self):
+        return frozenset({('or', frozenset(rule.atoms() for rule in self.rules))})
 
     def __str__(self):
         return '(' + ' or '.join(str(r) for r in self.rules) + ')'
@@ -243,6 +283,9 @@ class NotRule(AccessRule):
     def compile(self):
         inner = coerce_rule(self.rule).compiled()
         return lambda state, inner=inner: not inner(state)
+
+    def atoms(self):
+        return frozenset({('not', coerce_rule(self.rule).atoms())})
 
     def __str__(self):
         return f'not ({self.rule})'
@@ -341,6 +384,32 @@ def _compile_or(rules):
         return False
 
     return _or
+
+
+def _atom_value(value):
+    try:
+        hash(value)
+        return value
+    except TypeError:
+        return ('id', id(value))
+
+
+def keep_better_requirement(arrivals, dest, atoms, path):
+    """Keep a Pareto front of requirement atom-sets per destination.
+
+    Returns True if this arrival is new or strictly easier than some existing
+    one, and should be explored further. A is easier than B when A <= B.
+    """
+    existing = arrivals.get(dest)
+    if existing is None:
+        arrivals[dest] = [(atoms, path)]
+        return True
+    for old_atoms, _old_path in existing:
+        if old_atoms <= atoms:
+            return False
+    arrivals[dest] = [(old_atoms, old_path) for old_atoms, old_path in existing if not (atoms <= old_atoms)]
+    arrivals[dest].append((atoms, path))
+    return True
 
 
 def coerce_rule(rule):
