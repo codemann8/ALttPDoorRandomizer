@@ -2,7 +2,7 @@ import RaceRandom as random, logging, copy
 from collections import OrderedDict, defaultdict
 from DungeonGenerator import GenerationException
 from BaseClasses import OWEdge, WorldType, RegionType, Direction, Terrain, PolSlot, Entrance
-from source.logic.AccessRule import set_rule
+from source.logic.AccessRule import set_rule, and_rule, Has
 from Regions import mark_light_dark_world_regions
 from source.overworld.EntranceShuffle2 import connect_simple
 from source.overworld.FluteShuffle import shuffle_flute_spots, default_flute_connections, flute_data
@@ -1195,9 +1195,9 @@ def create_dynamic_mirror_exits(world, player):
                     exit.spot_type = 'Mirror'
                     to_region = world.get_region(region_dest_name, player)
                     if region.terrain == Terrain.Water or to_region.terrain == Terrain.Water:
-                        set_rule(exit, lambda state: state.has('Flippers', player) and state.has_Pearl(player) and state.has_Mirror(player))
+                        set_rule(exit, and_rule(Has('Flippers', player), Has('Moon Pearl', player), Has('Magic Mirror', player)))
                     else:
-                        set_rule(exit, lambda state: state.has_Mirror(player))
+                        set_rule(exit, Has('Magic Mirror', player))
                     exit.connect(to_region)
                     region.exits.append(exit)
 
