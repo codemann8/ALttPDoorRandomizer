@@ -296,6 +296,26 @@ def add_lamp_requirement(spot, player):
     add_rule(spot, Has('Lamp', player))
 
 
+def spike_cave_access_rule(player):
+    return and_rule(
+        Has('Hammer', player),
+        Primitive('can_lift_rocks', player),
+        or_rule(
+            and_rule(Has('Cape', player), Primitive('can_extend_magic', player, 16, True)),
+            and_rule(
+                Has('Cane of Byrna', player),
+                or_rule(
+                    Primitive('can_extend_magic', player, 12, True),
+                    and_rule(
+                        lambda state: state.world.can_take_damage,
+                        or_rule(Primitive('has_Boots', player), Primitive('has_hearts', player, 4)),
+                    ),
+                ),
+            ),
+        ),
+    )
+
+
 def path_to_access_rule(path, entrance):
     return and_rule(Reach(entrance), *path)
 
@@ -398,13 +418,7 @@ def global_rules(world, player):
     set_rule(world.get_location('Blacksmith', player), Has('Return Smith', player))
     set_rule(world.get_location('Magic Bat', player), Has('Magic Powder', player))
     set_rule(world.get_location('Library', player), Primitive('has_Boots', player))
-    set_rule(world.get_location('Spike Cave', player), lambda state:
-             state.has('Hammer', player) and state.can_lift_rocks(player) and
-             ((state.has('Cape', player) and state.can_extend_magic(player, 16, True)) or
-             (state.has('Cane of Byrna', player) and
-              (state.can_extend_magic(player, 12, True) or
-              (state.world.can_take_damage and (state.has_Boots(player) or state.has_hearts(player, 4))))))
-             )
+    set_rule(world.get_location('Spike Cave', player), spike_cave_access_rule(player))
 
     # underworld rules
     set_rule(world.get_entrance('Paradox Cave Push Block Reverse', player), Has('Magic Mirror', player))  # can erase block - overridden in noglitches
@@ -1110,11 +1124,7 @@ def pot_rules(world, player):
                 add_rule(l, Has('Hookshot', player))
         for l in world.get_region('Spike Cave', player).locations:
             if l.type == LocationType.Pot:
-                add_rule(l, and_rule(Has('Hammer', player), Primitive('can_lift_rocks', player)) and
-                         ((state.has('Cape', player) and state.can_extend_magic(player, 16, True)) or
-                         (state.has('Cane of Byrna', player) and
-                          (state.can_extend_magic(player, 12, True) or
-                          (state.world.can_take_damage and (state.has_Boots(player) or state.has_hearts(player, 4)))))))
+                add_rule(l, spike_cave_access_rule(player))
         for l in world.get_region('Mire Hint', player).locations:
             if l.type == LocationType.Pot:
                 add_rule(l, Primitive('can_use_bombs', player))
