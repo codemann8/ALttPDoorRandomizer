@@ -12,7 +12,7 @@ from OverworldGlitchRules import overworld_glitches_rules
 from UnderworldGlitchRules import underworld_glitches_rules
 
 from source.logic.Rule import RuleFactory
-from source.logic.AccessRule import set_rule, add_rule, and_rule, or_rule, TRUE, FALSE
+from source.logic.AccessRule import set_rule, add_rule, and_rule, or_rule, TRUE, FALSE, Has, Primitive, Reach
 from source.dungeon.EnemyList import EnemySprite, Sprite
 from source.enemizer.EnemyLogic import special_rules_check, special_rules_for_region, defeat_rule_single
 from source.enemizer.EnemyLogic import defeat_rule_multiple
@@ -183,37 +183,32 @@ def get_goal_rule(goal_type, world, player):
     if 'logic' in goal_data:
         for logic, data in goal_data['logic'].items():
             if logic == 'pendants':
-                pendants = int(data)
-                add_to_rule(lambda state: state.has_pendants(pendants, player))
+                add_to_rule(Primitive('has_pendants', int(data), player))
             elif logic == 'crystals':
-                crystals = int(data)
-                add_to_rule(lambda state: state.has_crystals(crystals, player))
+                add_to_rule(Primitive('has_crystals', int(data), player))
             elif logic == 'pendant_bosses':
-                pendant_bosses = int(data)
-                add_to_rule(lambda state: state.has_pendant_bosses(pendant_bosses, player))
+                add_to_rule(Primitive('has_pendant_bosses', int(data), player))
             elif logic == 'crystal_bosses':
-                crystal_bosses = int(data)
-                add_to_rule(lambda state: state.has_crystal_bosses(crystal_bosses, player))
+                add_to_rule(Primitive('has_crystal_bosses', int(data), player))
             elif logic == 'bosses':
-                bosses = int(data)
-                add_to_rule(lambda state: state.has('Beat Boss', player, bosses))
+                add_to_rule(Has('Beat Boss', player, int(data)))
             elif logic == 'aga1':
-                add_to_rule(lambda state: state.has('Beat Agahnim 1', player))
+                add_to_rule(Has('Beat Agahnim 1', player))
             elif logic == 'aga2':
-                add_to_rule(lambda state: state.has('Beat Agahnim 2', player))
+                add_to_rule(Has('Beat Agahnim 2', player))
             elif logic == 'goal_items':
                 if data is not None:
                     goal_items = int(data)
-                    add_to_rule(lambda state: state.item_count('Triforce Piece', player) + state.item_count('Power Star', player) >= goal_items)
+                    add_to_rule(lambda state, n=goal_items: state.item_count('Triforce Piece', player) + state.item_count('Power Star', player) >= n)
                 else:
                     add_to_rule(lambda state: state.item_count('Triforce Piece', player) + state.item_count('Power Star', player) >= int(state.world.treasure_hunt_count[player]))
             elif logic == 'collection':
                 if data is not None:
                     all_locations = [x for x in world.get_filled_locations(player) if not x.locked]
                     collection = int(data) - len(all_locations)
-                    add_to_rule(lambda state: state.everything(player, collection))
+                    add_to_rule(Primitive('everything', player, collection))
                 else:
-                    add_to_rule(lambda state: state.everything(player))
+                    add_to_rule(Primitive('everything', player))
             elif logic == 'item':
                 for item in data:
                     item_name = item
@@ -232,16 +227,15 @@ def get_goal_rule(goal_type, world, player):
                         item_name = f'{item_name} ({region_name})'
                     if '=' in item_name:
                         item_name, count = item_name.rsplit('=', 1)
-                        count = int(count)
-                        add_to_rule(lambda state: state.has(item_name, player, count))
+                        add_to_rule(Has(item_name, player, int(count)))
                     else:
-                        add_to_rule(lambda state: state.has(item_name, player))
+                        add_to_rule(Has(item_name, player))
             elif logic == 'access':
                 for region_name in data:
                     region = world.get_region(region_name, player)
                     if not region:
                         raise Exception(f'Invalid region name in custom goal logic for region: {region_name}')
-                    add_to_rule(lambda state: state.can_reach(region, None, player))
+                    add_to_rule(Reach(region, None, player))
             elif logic == 'ability':
                 for ability in data:
                     param = None
@@ -249,58 +243,64 @@ def get_goal_rule(goal_type, world, player):
                         ability, param = ability.split('(', 1)
                         param = param.rstrip(')')
                     if ability == 'FarmBombs':
-                        add_to_rule(lambda state: state.can_farm_bombs(player))
+                        add_to_rule(Primitive('can_farm_bombs', player))
                     elif ability == 'FarmRupees':
-                        add_to_rule(lambda state: state.can_farm_rupees(player))
+                        add_to_rule(Primitive('can_farm_rupees', player))
                     elif ability == 'NoBunny':
                         if not param:
                             raise Exception(f'NoBunny ability requires a region argument in custom goal logic')
-                        bunny_region = param
-                        region = world.get_region(bunny_region, player)
+                        region = world.get_region(param, player)
                         if region:
-                            add_to_rule(lambda state: state.is_not_bunny(bunny_region, player))
+                            add_to_rule(Primitive('is_not_bunny', region, player))
                         else:
                             raise Exception(f'Invalid region name in custom goal logic for NoBunny ability: {param}')
                     elif ability == 'CanUseBombs':
-                        add_to_rule(lambda state: state.can_use_bombs(player))
+                        add_to_rule(Primitive('can_use_bombs', player))
                     elif ability == 'CanBonkDrop':
-                        add_to_rule(lambda state: state.can_collect_bonkdrops(player))
+                        add_to_rule(Primitive('can_collect_bonkdrops', player))
                     elif ability == 'CanLift':
-                        add_to_rule(lambda state: state.can_lift_rocks(player))
+                        add_to_rule(Primitive('can_lift_rocks', player))
                     elif ability == 'MagicExtension':
-                        magic_count = 16
-                        if param:
-                            magic_count = int(param)
-                        add_to_rule(lambda state: state.can_extend_magic(player, magic_count))
+                        magic_count = int(param) if param else 16
+                        add_to_rule(Primitive('can_extend_magic', player, magic_count))
                     elif ability == 'CanStun':
-                        add_to_rule(lambda state: state.can_stun_enemies(player))
+                        add_to_rule(Primitive('can_stun_enemies', player))
                     elif ability == 'CanKill':
                         if param:
-                            enemy_count = int(param)
-                            add_to_rule(lambda state: state.can_kill_most_things(player, enemy_count))
+                            add_to_rule(Primitive('can_kill_most_things', player, int(param)))
                         else:
-                            add_to_rule(lambda state: state.can_kill_most_things(player))
+                            add_to_rule(Primitive('can_kill_most_things', player))
                     elif ability == 'CanShootArrows':
-                        add_to_rule(lambda state: state.can_shoot_arrows(player))
+                        add_to_rule(Primitive('can_shoot_arrows', player))
                     elif ability == 'CanFlute':
-                        add_to_rule(lambda state: state.can_flute(player))
+                        add_to_rule(Primitive('can_flute', player))
                     elif ability == 'HasFire':
-                        add_to_rule(lambda state: state.has_fire_source(player))
+                        add_to_rule(Primitive('has_fire_source', player))
                     elif ability == 'CanMelt':
-                        add_to_rule(lambda state: state.can_melt_things(player))
+                        add_to_rule(Primitive('can_melt_things', player))
                     elif ability == 'HasMMMedallion':
-                        add_to_rule(lambda state: state.has_misery_mire_medallion(player))
+                        add_to_rule(Primitive('has_misery_mire_medallion', player))
                     elif ability == 'HasTRMedallion':
-                        add_to_rule(lambda state: state.has_turtle_rock_medallion(player))
+                        add_to_rule(Primitive('has_turtle_rock_medallion', player))
     return rule if rule is not None else TRUE
 
 def add_bunny_rule(spot, player):
     if spot.can_cause_bunny(player):
-        add_rule(spot, lambda state: state.has_Pearl(player))
+        add_rule(spot, Has('Moon Pearl', player))
 
 
 def add_lamp_requirement(spot, player):
-    add_rule(spot, lambda state: state.has('Lamp', player) or state.world.free_lamp_cone[player])
+    if spot.parent_region.world.free_lamp_cone[player]:
+        return
+    add_rule(spot, Has('Lamp', player))
+
+
+def path_to_access_rule(path, entrance):
+    return and_rule(Reach(entrance), *path)
+
+
+def options_to_access_rule(options):
+    return or_rule(*options) if options else FALSE
 
 
 def forbid_item(location, item, player):
@@ -619,9 +619,7 @@ def global_rules(world, player):
 
     hidden_pits_door = world.get_door('Skull Small Hall WS', player)
 
-    def hidden_pits_rule(state):
-        return state.has('Hidden Pits', player)
-
+    hidden_pits_rule = Has('Hidden Pits', player)
     if hidden_pits_door.bigKey:
         key_logic = world.key_logic[player][hidden_pits_door.entrance.parent_region.dungeon.name]
         hidden_pits_rule = and_rule(hidden_pits_rule, create_rule(key_logic.bk_name, player))
@@ -629,8 +627,8 @@ def global_rules(world, player):
         d_name = hidden_pits_door.entrance.parent_region.dungeon.name
         hidden_pits_rule = and_rule(hidden_pits_rule, eval_small_key_door('Skull Small Hall WS', d_name, player))
 
-    set_rule(world.get_entrance('Skull 2 West Lobby Pits', player), lambda state: state.has_Boots(player)
-             or hidden_pits_rule(state))
+    set_rule(world.get_entrance('Skull 2 West Lobby Pits', player),
+             or_rule(Has('Pegasus Boots', player), hidden_pits_rule))
     set_rule(world.get_entrance('Skull 2 West Lobby Ledge Pits', player), hidden_pits_rule)
     set_defeat_dungeon_boss_rule(world.get_entrance('Skull Woods Boss', player))
 
@@ -1856,11 +1854,10 @@ def set_bunny_rules(world, player, inverted):
                               'DM Hammer Bridge (West)', 'DM Hammer Bridge (East)', 'Blacksmith Ledge Peg (West)'
                               ]
 
-    def path_to_access_rule(path, entrance):
-        return lambda state: state.can_reach(entrance) and all(rule_func(state) for rule_func in path)
-
-    def options_to_access_rule(options):
-        return lambda state: any(rule_func(state) for rule_func in options)
+    pearl = Has('Moon Pearl', player)
+    mirror = Has('Magic Mirror', player)
+    mirror_and_sword = and_rule(mirror, Primitive('has_sword', player))
+    mirror_and_boots = and_rule(mirror, Has('Pegasus Boots', player))
 
     # Helper functions to determine if the moon pearl is required
     def is_bunny(region):
@@ -1901,16 +1898,16 @@ def set_bunny_rules(world, player, inverted):
             if region.type != RegionType.Dungeon \
                     and (location is None or location.name not in OverworldGlitchRules.superbunny_accessible_locations) \
                     and not is_link(region):
-                return lambda state: state.has_Pearl(player)
+                return pearl
         else:
             if not is_link(region):
-                return lambda state: state.has_Pearl(player)
+                return pearl
 
         # in this case we are mixed region.
         # we collect possible options.
 
         # The base option is having the moon pearl
-        possible_options = [lambda state: state.has_Pearl(player)]
+        possible_options = [pearl]
 
         # We will search entrances recursively until we find
         # one that leads to an exclusively light world region
@@ -1928,7 +1925,8 @@ def set_bunny_rules(world, player, inverted):
                 new_seen = seen.union({new_region})
                 if new_region.type in (RegionType.Cave, RegionType.Dungeon) and new_seen in seen_sets:
                     continue
-                new_path = path + [entrance.access_rule]
+                edge_rule = entrance.verbose_rule
+                new_path = path if edge_rule is TRUE else path + [edge_rule]
                 new_region_path = region_path + [new_region]
                 seen_sets.add(frozenset(new_seen))
                 if not is_link(new_region):
@@ -1947,9 +1945,9 @@ def set_bunny_rules(world, player, inverted):
                             if lobby.name in bunny_revivable_entrances:
                                 possible_options.append(path_to_access_rule(new_path, entrance))
                             elif lobby.name in superbunny_revivable_entrances:
-                                possible_options.append(path_to_access_rule(new_path + [lambda state: state.has_Mirror(player)], entrance))
+                                possible_options.append(path_to_access_rule(new_path + [mirror], entrance))
                             elif lobby.name in superbunny_sword_revivable_entrances:
-                                possible_options.append(path_to_access_rule(new_path + [lambda state: state.has_Mirror(player) and state.has_sword(player)], entrance))
+                                possible_options.append(path_to_access_rule(new_path + [mirror_and_sword], entrance))
                             continue
                         elif region.type == RegionType.Cave and new_region.type != RegionType.Cave:
                             if entrance.name in OverworldGlitchRules.invalid_mirror_bunny_entrances:
@@ -1957,16 +1955,16 @@ def set_bunny_rules(world, player, inverted):
                             if entrance.name in bunny_pocket_entrances and not can_bunny_pocket_to(world, entrance.name, player):
                                 continue
                             if region.name in OverworldGlitchRules.sword_required_superbunny_mirror_regions:
-                                possible_options.append(path_to_access_rule(new_path + [lambda state: state.has_Mirror(player) and state.has_sword(player)], entrance))
+                                possible_options.append(path_to_access_rule(new_path + [mirror_and_sword], entrance))
                             elif region.name in OverworldGlitchRules.boots_required_superbunny_mirror_regions:
-                                possible_options.append(path_to_access_rule(new_path + [lambda state: state.has_Mirror(player) and state.has_Boots(player)], entrance))
+                                possible_options.append(path_to_access_rule(new_path + [mirror_and_boots], entrance))
                             elif location and location.name in OverworldGlitchRules.superbunny_accessible_locations:
                                 if location.name in OverworldGlitchRules.boots_required_superbunny_mirror_locations:
-                                    possible_options.append(path_to_access_rule(new_path + [lambda state: state.has_Mirror(player) and state.has_Boots(player)], entrance))
+                                    possible_options.append(path_to_access_rule(new_path + [mirror_and_boots], entrance))
                                 elif region.name == 'Kakariko Well (top)':
                                     possible_options.append(path_to_access_rule(new_path, entrance))
                                 else:
-                                    possible_options.append(path_to_access_rule(new_path + [lambda state: state.has_Mirror(player)], entrance))
+                                    possible_options.append(path_to_access_rule(new_path + [mirror], entrance))
                             continue
                         elif region.name == 'Superbunny Cave (Top)' and new_region.name == 'Superbunny Cave (Bottom)' and location and location.name in OverworldGlitchRules.superbunny_accessible_locations:
                             possible_options.append(path_to_access_rule(new_path, entrance))
@@ -2020,7 +2018,7 @@ def set_bunny_rules(world, player, inverted):
         for ent_name in bunny_pocket_entrances:
             bunny_exit = world.get_entrance(ent_name, player)
             if bunny_exit.connected_region and is_bunny(bunny_exit.parent_region) and not can_bunny_pocket_to(world, ent_name, player):
-                add_rule(bunny_exit, lambda state: state.has_Pearl(player))
+                add_rule(bunny_exit, pearl)
 
 
 drop_dungeon_entrances = {
@@ -2304,7 +2302,7 @@ def retro_in_hc(spot):
 
 
 def create_rule(item_name, player):
-    return lambda state: state.has(item_name, player)
+    return Has(item_name, player)
 
 
 def create_key_rule(small_key_name, player, keys):
