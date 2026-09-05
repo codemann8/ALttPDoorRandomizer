@@ -4,6 +4,7 @@ Helper functions to deliver entrance/exit/region sets to OWG rules.
 
 from BaseClasses import Entrance, Region
 from OWEdges import OWTileRegions
+from source.logic.AccessRule import set_rule, add_rule
 
 # Cave regions that superbunny can get through - but only with a sword.
 sword_required_superbunny_mirror_regions = ["Spiral Cave (Top)"]
@@ -318,13 +319,11 @@ def overworld_glitches_rules(world, player):
 
 
 def add_alternate_rule(entrance, rule):
-    old_rule = entrance.access_rule
-    entrance.access_rule = lambda state: old_rule(state) or rule(state)
+    add_rule(entrance, rule, 'or')
 
 
 def add_additional_rule(entrance, rule):
-    old_rule = entrance.access_rule
-    entrance.access_rule = lambda state: old_rule(state) and rule(state)
+    add_rule(entrance, rule, 'and')
 
 
 def create_no_logic_connections(player, world, connections, connect_external=False):
@@ -349,7 +348,7 @@ def set_owg_rules(player, world, connections, default_rule):
     for entrance, _, _, *rule_override in connections:
         connection = world.get_entrance(entrance, player)
         rule = rule_override[0] if len(rule_override) > 0 else default_rule
-        connection.access_rule = rule
+        set_rule(connection, rule)
 
 
 glitch_regions = (['Central Cliffs', 'Eastern Cliff', 'Desert Northern Cliffs'],

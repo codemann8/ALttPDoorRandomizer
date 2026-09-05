@@ -700,7 +700,8 @@ def create_farm_locations(world, player):
     def create_and_fill_location(region_name, loc_description, item_name):
         loc = world.get_location_unsafe(f'{region_name} {loc_description}', player)
         if loc:
-            loc.access_rule = lambda state: True
+            from source.logic.AccessRule import set_rule, TRUE
+            set_rule(loc, TRUE)
         else:
             region = world.get_region(region_name, player)
             loc = Location(player, f'{region_name} {loc_description}', 0, region)

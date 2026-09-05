@@ -24,6 +24,7 @@ from Doors import create_doors
 from DoorShuffle import link_doors, connect_portal, link_doors_prep
 from RoomData import create_rooms
 from Rules import set_rules
+from source.logic.AccessRule import set_rule, TRUE
 from Dungeons import create_dungeons
 from Fill import distribute_items_restrictive, promote_dungeon_items, fill_dungeons_restrictive, ensure_good_items
 from Fill import dungeon_tracking
@@ -902,7 +903,7 @@ def copy_world(world):
         new_location.locked = location.locked
         new_location.skip = location.skip
         # these need to be modified properly by set_rules
-        new_location.access_rule = lambda state: True
+        set_rule(new_location, TRUE)
         new_location.item_rule = lambda state: True
         new_location.forced_item = location.forced_item
         new_location.pot = location.pot
