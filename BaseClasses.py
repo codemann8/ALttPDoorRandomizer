@@ -1209,6 +1209,33 @@ class CollectionState(object):
         obtained = self.prog_items[item, player] - self.forced_keys[item, player]
         return obtained >= count
 
+    def eval_small_key_door(self, door_name, dungeon, player):
+        from Rules import eval_small_key_door_main
+        return eval_small_key_door_main(self, door_name, dungeon, player)
+
+    def eval_small_key_door_partial(self, door_name, dungeon, player):
+        from Rules import eval_small_key_door_partial_main
+        return eval_small_key_door_partial_main(self, door_name, dungeon, player)
+
+    def eval_small_key_door_strict(self, door_name, dungeon, player):
+        from Rules import eval_small_key_door_strict_main
+        return eval_small_key_door_strict_main(self, door_name, dungeon, player)
+
+    def eval_alternative_crystal(self, door_name, dungeon, player):
+        from Rules import eval_alternative_crystal_main
+        return eval_alternative_crystal_main(self, door_name, dungeon, player)
+
+    def item_is_at(self, location, player, item):
+        loc = self.world.get_location(location, player)
+        return loc.item is not None and loc.item.name == item and loc.item.player == player
+
+    def item_in_named_locations(self, item, player, location_names):
+        for name in location_names:
+            loc = self.world.get_location(name, player)
+            if loc.item is not None and loc.item.name == item and loc.item.player == player:
+                return True
+        return False
+
     def can_buy_unlimited(self, item, player):
         for shop in self.world.shops[player]:
             if shop.region.player == player and shop.has_unlimited(item) and shop.region.can_reach(self):

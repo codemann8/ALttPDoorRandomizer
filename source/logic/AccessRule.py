@@ -40,7 +40,8 @@ class AccessRule(object):
         """Hashable AND-set of this rule, for dominance checks.
 
         Empty means always true. A is easier than B when a.atoms() <= b.atoms().
-        OR nodes are a single blob so we do not DNF-expand.
+        OR contributes only atoms present on every branch (no DNF expand).
+        Opaque leaves stay unique by id until they are converted.
         """
         return frozenset({('opaque', id(self))})
 
@@ -252,7 +253,23 @@ class OrRule(AccessRule):
         return _compile_or(self.rules)
 
     def atoms(self):
-        return frozenset({('or', frozenset(rule.atoms() for rule in self.rules))})
+        # Necessary atoms only: intersection of the branches. Disjoint
+        # alternatives (vanilla | clip) add nothing, so they do not block
+        # dominance the way a unique OR blob did. FALSE branches are ignored.
+        necessary = None
+        for rule in self.rules:
+            child = rule.atoms()
+            if ('false',) in child:
+                continue
+            if necessary is None:
+                necessary = child
+            else:
+                necessary &= child
+            if not necessary:
+                return frozenset()
+        if necessary is None:
+            return frozenset({('false',)})
+        return necessary
 
     def __str__(self):
         return '(' + ' or '.join(str(r) for r in self.rules) + ')'

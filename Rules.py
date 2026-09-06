@@ -334,20 +334,6 @@ def add_item_rule(location, rule):
     location.item_rule = lambda item: rule(item) and old_rule(item)
 
 
-def item_in_locations(state, item, player, locations):
-    for location in locations:
-        if item_name(state, location[0], location[1]) == (item, player):
-            return True
-    return False
-
-
-def item_name(state, location, player):
-    location = state.world.get_location(location, player)
-    if location.item is None:
-        return None
-    return (location.item.name, location.item.player)
-
-
 def global_rules(world, player):
     # ganon can only carry triforce
     add_item_rule(world.get_location('Ganon', player), lambda item: item.name == 'Triforce' and item.player == player)
@@ -2190,10 +2176,11 @@ def add_key_logic_rules(world, player):
             if not door_entrance.door.smallKey and door_entrance.door.crystal == CrystalBarrier.Blue:
                 add_rule(door_entrance, eval_alternative_crystal(door_name, d_name, player), 'or')
             else:
-                add_rule(door_entrance, eval_func(door_name, d_name, player))
+                door_key_rule = eval_func(door_name, d_name, player)
+                add_rule(door_entrance, door_key_rule)
                 if door_entrance.door.dependents:
                     for dep in door_entrance.door.dependents:
-                        add_rule(dep.entrance, eval_func(door_name, d_name, player))
+                        add_rule(dep.entrance, door_key_rule)
         for location in d_logic.bk_restricted:
             if not location.forced_item:
                 forbid_item(location, d_logic.bk_name, player)
@@ -2298,19 +2285,19 @@ def eval_alternative_crystal_main(state, door_name, dungeon, player):
 
 
 def eval_small_key_door(door_name, dungeon, player):
-    return lambda state: eval_small_key_door_main(state, door_name, dungeon, player)
+    return Primitive('eval_small_key_door', door_name, dungeon, player)
 
 
 def eval_small_key_door_partial(door_name, dungeon, player):
-    return lambda state: eval_small_key_door_partial_main(state, door_name, dungeon, player)
+    return Primitive('eval_small_key_door_partial', door_name, dungeon, player)
 
 
 def eval_small_key_door_strict(door_name, dungeon, player):
-    return lambda state: eval_small_key_door_strict_main(state, door_name, dungeon, player)
+    return Primitive('eval_small_key_door_strict', door_name, dungeon, player)
 
 
 def eval_alternative_crystal(door_name, dungeon, player):
-    return lambda state: eval_alternative_crystal_main(state, door_name, dungeon, player)
+    return Primitive('eval_alternative_crystal', door_name, dungeon, player)
 
 
 def allow_big_key_in_big_chest(bk_name, player):
@@ -2326,23 +2313,41 @@ def create_rule(item_name, player):
 
 
 def create_key_rule(small_key_name, player, keys):
-    return lambda state: state.has_sm_key(small_key_name, player, keys)
+    return Primitive('has_sm_key', small_key_name, player, keys)
 
 
 def create_key_rule_allow_small(small_key_name, player, keys, location):
     loc = location.name
-    return lambda state: state.has_sm_key(small_key_name, player, keys) or (item_name(state, loc, player) in [(small_key_name, player)] and state.has_sm_key(small_key_name, player, keys - 1))
+    return or_rule(
+        Primitive('has_sm_key', small_key_name, player, keys),
+        and_rule(
+            Primitive('item_is_at', loc, player, small_key_name),
+            Primitive('has_sm_key', small_key_name, player, keys - 1),
+        ),
+    )
 
 
 def create_key_rule_bk_exception(small_key_name, big_key_name, player, keys, bk_keys, bk_locs):
-    chest_names = [x.name for x in bk_locs]
-    return lambda state: (state.has_sm_key(small_key_name, player, keys) and not item_in_locations(state, big_key_name, player, zip(chest_names, [player] * len(chest_names)))) or (item_in_locations(state, big_key_name, player, zip(chest_names, [player] * len(chest_names))) and state.has_sm_key(small_key_name, player, bk_keys))
+    chest_names = tuple(x.name for x in bk_locs)
+    bk_there = Primitive('item_in_named_locations', big_key_name, player, chest_names)
+    return or_rule(
+        and_rule(Primitive('has_sm_key', small_key_name, player, keys), not_rule(bk_there)),
+        and_rule(bk_there, Primitive('has_sm_key', small_key_name, player, bk_keys)),
+    )
 
 
 def create_key_rule_bk_exception_or_allow(small_key_name, big_key_name, player, keys, location, bk_keys, bk_locs):
     loc = location.name
-    chest_names = [x.name for x in bk_locs]
-    return lambda state: (state.has_sm_key(small_key_name, player, keys) and not item_in_locations(state, big_key_name, player, zip(chest_names, [player] * len(chest_names)))) or (item_name(state, loc, player) in [(small_key_name, player)] and state.has_sm_key(small_key_name, player, keys - 1)) or (item_in_locations(state, big_key_name, player, zip(chest_names, [player] * len(chest_names))) and state.has_sm_key(small_key_name, player, bk_keys))
+    chest_names = tuple(x.name for x in bk_locs)
+    bk_there = Primitive('item_in_named_locations', big_key_name, player, chest_names)
+    return or_rule(
+        and_rule(Primitive('has_sm_key', small_key_name, player, keys), not_rule(bk_there)),
+        and_rule(
+            Primitive('item_is_at', loc, player, small_key_name),
+            Primitive('has_sm_key', small_key_name, player, keys - 1),
+        ),
+        and_rule(bk_there, Primitive('has_sm_key', small_key_name, player, bk_keys)),
+    )
 
 
 def create_advanced_key_rule(key_logic, player, rule):
