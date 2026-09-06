@@ -1,7 +1,8 @@
 from BaseClasses import World
 from DoorShuffle import link_doors
 from Doors import create_doors
-from Dungeons import create_dungeons, get_dungeon_item_pool
+from Dungeons import create_dungeons
+from Fill import get_dungeon_item_pool
 from OverworldShuffle import link_overworld
 from source.overworld.EntranceShuffle2 import link_entrances_new
 from ItemList import generate_itempool, difficulties

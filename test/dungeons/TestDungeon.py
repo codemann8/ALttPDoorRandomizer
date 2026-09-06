@@ -1,7 +1,8 @@
 import unittest
 
 from BaseClasses import World, CollectionState
-from Dungeons import create_dungeons, get_dungeon_item_pool
+from Dungeons import create_dungeons
+from Fill import get_dungeon_item_pool
 from ItemList import difficulties, generate_itempool
 from Items import ItemFactory
 from Regions import create_regions
