@@ -1886,6 +1886,13 @@ def set_bunny_rules(world, player, inverted):
 
 
     bunny_rule_cache = {}
+    # Walk using pre-bunny edge rules so later add_rule results are not nested
+    # into later walks.
+    frozen_edge_rules = {}
+    for _region in world.get_regions():
+        if _region.player == player:
+            for _ent in _region.entrances:
+                frozen_edge_rules[id(_ent)] = _ent.verbose_rule
 
     def get_rule_to_add(region, location=None, connecting_entrance=None):
         # In OWG, a location can potentially be superbunny-mirror accessible or
@@ -1910,8 +1917,12 @@ def set_bunny_rules(world, player, inverted):
         # in this case we are mixed region.
         # we collect possible options.
 
-        # The base option is having the moon pearl
-        possible_options = [pearl]
+        # The base option is having the moon pearl. Other options are Pareto-
+        # pruned against each other (not against pearl).
+        option_front = {}
+
+        def add_option(rule):
+            keep_better_requirement(option_front, 0, rule.atoms(), rule)
 
         # Walk parent entrances until we reach a region where the player is Link
         # (not a bunny), i.e. a no-pearl way into this mixed region. Each step
@@ -1925,7 +1936,7 @@ def set_bunny_rules(world, player, inverted):
                 if entrance.door and entrance.door.blocked:
                     continue
                 new_region = entrance.parent_region
-                edge_rule = entrance.verbose_rule
+                edge_rule = frozen_edge_rules.get(id(entrance), entrance.verbose_rule)
                 if edge_rule is FALSE:
                     continue
                 new_path = path if edge_rule is TRUE else path + [edge_rule]
@@ -1946,11 +1957,11 @@ def set_bunny_rules(world, player, inverted):
                                 portal_regions = [world.get_region(reg, player) for reg in region.dungeon.regions if reg.endswith('Portal')]
                                 lobby = next(reg.connected_region for portal_reg in portal_regions for reg in portal_reg.exits if reg.name.startswith('Enter '))
                             if lobby.name in bunny_revivable_entrances:
-                                possible_options.append(path_to_access_rule(new_path, entrance))
+                                add_option(path_to_access_rule(new_path, entrance))
                             elif lobby.name in superbunny_revivable_entrances:
-                                possible_options.append(path_to_access_rule(new_path + [mirror], entrance))
+                                add_option(path_to_access_rule(new_path + [mirror], entrance))
                             elif lobby.name in superbunny_sword_revivable_entrances:
-                                possible_options.append(path_to_access_rule(new_path + [mirror_and_sword], entrance))
+                                add_option(path_to_access_rule(new_path + [mirror_and_sword], entrance))
                             continue
                         elif region.type == RegionType.Cave and new_region.type != RegionType.Cave:
                             if entrance.name in OverworldGlitchRules.invalid_mirror_bunny_entrances:
@@ -1958,19 +1969,19 @@ def set_bunny_rules(world, player, inverted):
                             if entrance.name in bunny_pocket_entrances and not can_bunny_pocket_to(world, entrance.name, player):
                                 continue
                             if region.name in OverworldGlitchRules.sword_required_superbunny_mirror_regions:
-                                possible_options.append(path_to_access_rule(new_path + [mirror_and_sword], entrance))
+                                add_option(path_to_access_rule(new_path + [mirror_and_sword], entrance))
                             elif region.name in OverworldGlitchRules.boots_required_superbunny_mirror_regions:
-                                possible_options.append(path_to_access_rule(new_path + [mirror_and_boots], entrance))
+                                add_option(path_to_access_rule(new_path + [mirror_and_boots], entrance))
                             elif location and location.name in OverworldGlitchRules.superbunny_accessible_locations:
                                 if location.name in OverworldGlitchRules.boots_required_superbunny_mirror_locations:
-                                    possible_options.append(path_to_access_rule(new_path + [mirror_and_boots], entrance))
+                                    add_option(path_to_access_rule(new_path + [mirror_and_boots], entrance))
                                 elif region.name == 'Kakariko Well (top)':
-                                    possible_options.append(path_to_access_rule(new_path, entrance))
+                                    add_option(path_to_access_rule(new_path, entrance))
                                 else:
-                                    possible_options.append(path_to_access_rule(new_path + [mirror], entrance))
+                                    add_option(path_to_access_rule(new_path + [mirror], entrance))
                             continue
                         elif region.name == 'Superbunny Cave (Top)' and new_region.name == 'Superbunny Cave (Bottom)' and location and location.name in OverworldGlitchRules.superbunny_accessible_locations:
-                            possible_options.append(path_to_access_rule(new_path, entrance))
+                            add_option(path_to_access_rule(new_path, entrance))
                     else:
                         continue
                 if is_bunny(new_region):
@@ -1979,8 +1990,9 @@ def set_bunny_rules(world, player, inverted):
                         queue.append((new_region, new_path, new_atoms))
                 else:
                     # we have reached pure light world, so we have a new possible option
-                    possible_options.append(path_to_access_rule(new_path, entrance))
-        result = options_to_access_rule(possible_options)
+                    add_option(path_to_access_rule(new_path, entrance))
+        extras = [rule for _atoms, rule in option_front.get(0, [])]
+        result = options_to_access_rule([pearl] + extras)
         bunny_rule_cache[cache_key] = result
         return result
 

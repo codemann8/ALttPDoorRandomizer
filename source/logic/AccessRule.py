@@ -39,7 +39,8 @@ class AccessRule(object):
     def atoms(self):
         """Hashable AND-set of this rule, for dominance checks.
 
-        Empty means always true. A is easier than B when a.atoms() <= b.atoms().
+        Empty means always true. A is easier than B when every normalized
+        atom of A is in B at an equal or higher count (see requirement_easier).
         OR contributes only atoms present on every branch (no DNF expand).
         Opaque leaves stay unique by id until they are converted.
         """
@@ -411,20 +412,80 @@ def _atom_value(value):
         return ('id', id(value))
 
 
+# Primitive.args index whose integer is "more is harder" (keys, hearts, crystals, magic).
+_COUNT_PRIMITIVES = {
+    'has_sm_key': 2,
+    'has_sm_key_strict': 2,
+    'has_hearts': 1,
+    'has_crystals': 0,
+    'can_extend_magic': 1,
+}
+
+
+def _atom_key_count(atom):
+    kind = atom[0] if atom else None
+    if kind == 'has':
+        return ('has', atom[1], atom[2]), atom[3]
+    if kind == 'prim':
+        name, args, kwargs = atom[1], atom[2], atom[3]
+        idx = _COUNT_PRIMITIVES.get(name)
+        if idx is not None:
+            if idx < len(args) and isinstance(args[idx], int):
+                return ('prim', name, args[:idx] + args[idx + 1:], kwargs), args[idx]
+            if idx >= len(args):
+                return ('prim', name, args, kwargs), 1
+    return atom, 1
+
+
+def _normalize_requirement(atoms):
+    """Map comparable keys to the hardest count in the AND-set. None means FALSE."""
+    if ('false',) in atoms:
+        return None
+    hardest = {}
+    for atom in atoms:
+        key, count = _atom_key_count(atom)
+        prev = hardest.get(key)
+        if prev is None or count > prev:
+            hardest[key] = count
+    return hardest
+
+
+def requirement_easier(a_atoms, b_atoms):
+    """True if a is less restrictive than b (satisfying b implies a).
+
+    Counted Has / has_sm_key / hearts / crystals / magic: a lower count is easier.
+    Other atoms must match exactly. Empty is easier than everything.
+    """
+    a = _normalize_requirement(a_atoms)
+    b = _normalize_requirement(b_atoms)
+    if a is None:
+        return b is None
+    if b is None:
+        return True
+    for key, count in a.items():
+        if key not in b or b[key] < count:
+            return False
+    return True
+
+
 def keep_better_requirement(arrivals, dest, atoms, path):
     """Keep a Pareto front of requirement atom-sets per destination.
 
     Returns True if this arrival is new or strictly easier than some existing
-    one, and should be explored further. A is easier than B when A <= B.
+    one, and should be explored further.
     """
     existing = arrivals.get(dest)
     if existing is None:
         arrivals[dest] = [(atoms, path)]
         return True
     for old_atoms, _old_path in existing:
-        if old_atoms <= atoms:
+        if requirement_easier(old_atoms, atoms):
             return False
-    arrivals[dest] = [(old_atoms, old_path) for old_atoms, old_path in existing if not (atoms <= old_atoms)]
+    arrivals[dest] = [
+        (old_atoms, old_path)
+        for old_atoms, old_path in existing
+        if not requirement_easier(atoms, old_atoms)
+    ]
     arrivals[dest].append((atoms, path))
     return True
 
