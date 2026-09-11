@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestSwampPalace(TestDungeon):
 
     def testSwampPalace(self):
-        self.starting_regions = ['Swamp Palace (Entrance)']
+        self.starting_regions = ['Swamp Lobby']
         self.run_tests([
             ["Swamp Palace - Entrance", False, []],
             ["Swamp Palace - Entrance", False, [], ['Flippers']],

@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestAgahnimsTower(TestDungeon):
 
     def testTower(self):
-        self.starting_regions = ['Agahnims Tower']
+        self.starting_regions = ['Tower Lobby']
         self.run_tests([
             ["Castle Tower - Room 03", False, []],
             ["Castle Tower - Room 03", False, [], ['Progressive Sword', 'Hammer', 'Progressive Bow', 'Fire Rod', 'Ice Rod', 'Cane of Somaria', 'Cane of Byrna']],

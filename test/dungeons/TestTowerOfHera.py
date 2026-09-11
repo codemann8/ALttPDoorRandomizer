@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestTowerOfHera(TestDungeon):
 
     def testTowerOfHera(self):
-        self.starting_regions = ['Tower of Hera (Bottom)']
+        self.starting_regions = ['Hera Lobby']
         self.run_tests([
             ["Tower of Hera - Big Key Chest", False, []],
             ["Tower of Hera - Big Key Chest", False, [], ['Small Key (Tower of Hera)']],

@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestIcePalace(TestDungeon):
 
     def testIcePalace(self):
-        self.starting_regions = ['Ice Palace (Entrance)']
+        self.starting_regions = ['Ice Lobby']
         self.run_tests([
             ["Ice Palace - Big Key Chest", False, []],
             ["Ice Palace - Big Key Chest", False, [], ['Hammer']],

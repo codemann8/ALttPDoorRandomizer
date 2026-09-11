@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestGanonsTower(TestDungeon):
 
     def testGanonsTower(self):
-        self.starting_regions = ['Ganons Tower (Entrance)']
+        self.starting_regions = ['GT Lobby']
         self.run_tests([
             ["Ganons Tower - Bob's Torch", False, []],
             ["Ganons Tower - Bob's Torch", False, [], ['Pegasus Boots']],

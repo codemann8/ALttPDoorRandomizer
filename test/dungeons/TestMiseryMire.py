@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestMiseryMire(TestDungeon):
 
     def testMiseryMire(self):
-        self.starting_regions = ['Misery Mire (Entrance)']
+        self.starting_regions = ['Mire Lobby']
         self.run_tests([
             ["Misery Mire - Bridge Chest", False, []],
             ["Misery Mire - Bridge Chest", False, [], ['Pegasus Boots', 'Hookshot']],

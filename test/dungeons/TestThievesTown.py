@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestThievesTown(TestDungeon):
     
     def testThievesTown(self):
-        self.starting_regions = ['Thieves Town (Entrance)']
+        self.starting_regions = ['Thieves Lobby']
         self.run_tests([
             ["Thieves' Town - Attic", False, []],
             ["Thieves' Town - Attic", False, [], ['Big Key (Thieves Town)']],

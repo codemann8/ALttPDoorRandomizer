@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestDarkPalace(TestDungeon):
 
     def testDarkPalace(self):
-        self.starting_regions = ['Palace of Darkness (Entrance)']
+        self.starting_regions = ['PoD Lobby']
         key = 'Small Key (Palace of Darkness)'
         self.run_tests([
             ["Palace of Darkness - Shooter Room", True, []],

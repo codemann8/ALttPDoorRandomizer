@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestDesertPalace(TestDungeon):
 
     def testDesertPalace(self):
-        self.starting_regions = ['Desert Palace North', 'Desert Palace Main (Inner)', 'Desert Palace Main (Outer)']
+        self.starting_regions = ['Desert Main Lobby', 'Desert East Lobby', 'Desert West Lobby', 'Desert Back Lobby', 'Desert North Hall']
         self.run_tests([
             ["Desert Palace - Map Chest", True, []],
 

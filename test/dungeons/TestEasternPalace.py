@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestEasternPalace(TestDungeon):
 
     def testEastern(self):
-        self.starting_regions = ["Eastern Palace"]
+        self.starting_regions = ['Eastern Lobby']
         self.run_tests([
                 ["Eastern Palace - Compass Chest", True, []],
 

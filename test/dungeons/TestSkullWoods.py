@@ -4,7 +4,7 @@ from test.dungeons.TestDungeon import TestDungeon
 class TestSkullWoods(TestDungeon):
 
     def testSkullWoodsFrontAllEntrances(self):
-        self.starting_regions = ['Skull Woods First Section', 'Skull Woods First Section (Left)', 'Skull Woods First Section (Top)']
+        self.starting_regions = ['Skull 1 Lobby', 'Skull Left Drop', 'Skull Pinball']
         self.run_tests([
             ["Skull Woods - Big Chest", False, []],
             ["Skull Woods - Big Chest", False, [], ['Big Key (Skull Woods)']],
@@ -20,7 +20,7 @@ class TestSkullWoods(TestDungeon):
         ])
 
     def testSkullWoodsFrontOnly(self):
-        self.starting_regions = ['Skull Woods First Section']
+        self.starting_regions = ['Skull 1 Lobby']
         self.run_tests([
             ["Skull Woods - Big Chest", False, []],
             ["Skull Woods - Big Chest", False, [], ['Never in logic']],
@@ -41,7 +41,7 @@ class TestSkullWoods(TestDungeon):
         ])
 
     def testSkullWoodsLeftOnly(self):
-        self.starting_regions = ['Skull Woods First Section (Left)']
+        self.starting_regions = ['Skull Left Drop']
         self.run_tests([
             ["Skull Woods - Big Chest", False, []],
             ["Skull Woods - Big Chest", False, [], ['Never in logic']],
@@ -58,7 +58,7 @@ class TestSkullWoods(TestDungeon):
         ])
 
     def testSkullWoodsBackOnly(self):
-        self.starting_regions = ['Skull Woods First Section (Top)']
+        self.starting_regions = ['Skull Pinball']
         self.run_tests([
             ["Skull Woods - Big Chest", False, []],
             ["Skull Woods - Big Chest", False, [], ['Big Key (Skull Woods)']],
@@ -80,11 +80,11 @@ class TestSkullWoods(TestDungeon):
         ])
 
     def testSkullWoodsMiddle(self):
-        self.starting_regions = ['Skull Woods Second Section']
+        self.starting_regions = ['Skull 2 East Lobby']
         self.run_tests([["Skull Woods - Big Key Chest", True, []]])
 
     def testSkullWoodsBack(self):
-        self.starting_regions = ['Skull Woods Final Section (Entrance)']
+        self.starting_regions = ['Skull 3 Lobby']
         self.run_tests([
             ["Skull Woods - Bridge Room", True, []],
 
