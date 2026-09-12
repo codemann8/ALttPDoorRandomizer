@@ -117,8 +117,9 @@ Determines how small key door logic works:
 - **Partial Protection** - Assumes you always have full inventory and worst case usage. Accounts for dark room and bunny revival glitches
 - **Strict** - Small key doors require all small keys to be available to be in logic
 - **Dangerous** - Assumes you never use keys out of logic (not recommended)
+- **Static** - ER's hand-written key rules, counting chest keys only. Requires vanilla doors and unshuffled key drops and key pots; entrance shuffle is fine
 
-CLI: `--key_logic [partial|strict|dangerous]`
+CLI: `--key_logic [partial|strict|dangerous|static]`
 
 ### Decouple Doors
 

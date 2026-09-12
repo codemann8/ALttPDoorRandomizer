@@ -3794,7 +3794,7 @@ prizeshuffle_mode = {'none': 0, 'dungeon': 1, 'nearby': 2, 'wild': 3}
 # byte 14: POOT TKKK (pseudoboots, overworld_map, trap_door_mode, key_logic_algo)
 overworld_map_mode = {'default': 0, 'compass': 1, 'map': 2}
 trap_door_mode = {'vanilla': 0, 'optional': 1, 'boss': 2, 'oneway': 3}
-key_logic_algo = {'dangerous': 0, 'partial': 1, 'strict': 2}
+key_logic_algo = {'dangerous': 0, 'partial': 1, 'strict': 2, 'static': 3}
 
 # byte 15: SSLL M?DD (skullwoods, linked_drops, mirrorscroll, 1 free byte, door_type)
 skullwoods_mode = {'original': 0, 'restricted': 1, 'loose': 2, 'followlinked': 3}
