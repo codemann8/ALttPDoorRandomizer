@@ -12,7 +12,7 @@ from Utils import bidict
 
 version_number = '0.8.0.0'
 # branch indicator is intentionally different across branches
-version_branch = '-u'
+version_branch = ''
 
 __version__ = '%s%s' % (version_number, version_branch)
 

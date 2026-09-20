@@ -456,6 +456,7 @@ def create_dungeon_regions(world, player):
         create_dungeon_region(player, 'Sewers Yet More Rats', 'Hyrule Castle', None, ['Sewers Pull Switch Down Stairs', 'Sewers Yet More Rats S']),
         create_dungeon_region(player, 'Sewers Pull Switch', 'Hyrule Castle', None, ['Sewers Pull Switch N', 'Sewers Pull Switch S']),
         create_dungeon_region(player, 'Sanctuary', 'Hyrule Castle',
+                              #['Sanctuary'] if not std_flag else 
                               ['Sanctuary', 'Zelda Drop Off'],
                               ['Sanctuary S', 'Sanctuary N', 'Sanctuary Mirror Route']),
 
