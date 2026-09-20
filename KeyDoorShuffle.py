@@ -63,6 +63,7 @@ class KeyLogic(object):
         self.dungeon = dungeon_name
         self.sm_doors = {}
         self.prize_location = None
+        self.chest_counting = False  # door numbers count chest keys only, drops excluded
 
     def check_placement(self, unplaced_keys, wild_keys, reached_keys, self_locking_keys,
                         big_key_loc=None, prize_loc=None, cr_count=7):
@@ -1398,6 +1399,56 @@ def set_paired_rules(key_logic, world, player):
         door = world.get_door(d_name, player)
         if door.dest.name in key_logic.door_rules.keys():
             rule.opposite = key_logic.door_rules[door.dest.name]
+
+
+def apply_key_rule_specs(world, player, specs, chest_counting):
+    logger = logging.getLogger('')
+    layouts = world.key_layout[player]
+    resolved = {}
+    for door_name, spec in specs.items():
+        door = world.get_door(door_name, player)
+        dungeon = next((name for name, layout in layouts.items() if door in layout.flat_prop), None)
+        if dungeon is None:
+            raise Exception(f'key_logic: {door_name} is not a small key door in this layout')
+        resolved[door] = (dungeon, spec)
+    for door, (dungeon, spec) in list(resolved.items()):
+        partner = layouts[dungeon].key_logic.sm_doors.get(door)
+        if partner and partner not in resolved:
+            resolved[partner] = (dungeon, {'keys': spec['keys']})
+    if chest_counting:
+        for dungeon in {d for d, _ in resolved.values()}:
+            layouts[dungeon].key_logic.chest_counting = True
+    for door, (dungeon, spec) in resolved.items():
+        key_logic = layouts[dungeon].key_logic
+        number = spec['keys']
+        rule = key_logic.door_rules.get(door.name)
+        if rule is None:
+            rule = DoorRules(number, True)
+            key_logic.door_rules[door.name] = rule
+            if door.dest and door.dest.name in key_logic.door_rules:
+                rule.opposite = key_logic.door_rules[door.dest.name]
+                rule.opposite.opposite = rule
+        rule.small_key_num = number
+        rule.new_rules[KeyRuleType.WorstCase] = number
+        if 'big_key_in' in spec:
+            rule.alternate_big_key_loc = {world.get_location(name, player) for name in spec['big_key_in']}
+            rule.new_rules[(KeyRuleType.Lock, key_logic.bk_name)] = spec['with_big_key']
+            rule.alternate_small_key = spec['with_big_key']
+        if 'small_key_in' in spec:
+            rule.small_location = world.get_location(spec['small_key_in'], player)
+            rule.allow_small = True
+            rule.new_rules[KeyRuleType.AllowSmall] = spec['with_small_key']
+        # remaining alternatives stay one below the new number
+        for rule_type in list(rule.new_rules.keys()):
+            if rule_type == KeyRuleType.WorstCase:
+                continue
+            if number == 0:
+                del rule.new_rules[rule_type]
+            elif rule.new_rules[rule_type] >= number:
+                rule.new_rules[rule_type] = number - 1
+        if rule.alternate_small_key is not None and rule.alternate_small_key >= number:
+            rule.alternate_small_key = max(number - 1, 0)
+        logger.debug('key_logic: %s (%s) set to %s keys', door.name, dungeon, number)
 
 
 def check_bk_special(regions, world, player):
