@@ -1681,6 +1681,7 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
                     invalid_connections[ext] = invalid_connections[ext].union({'Agahnims Tower', 'Hyrule Castle Entrance (West)', 'Hyrule Castle Entrance (East)'})
                 break
 
+
     def connect_cave_swap(entrance, exit, current_cave):
         swap_entrance, swap_exit = connect_swap(entrance, exit, avail)
         if swap_entrance and entrance not in single_entrance_map:
@@ -1693,6 +1694,8 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
                         cave_options.remove(option)
                     break
         return swap_entrance, swap_exit
+
+    prepare_must_exit_exits(cave_options)
 
     used_caves = []
     required_entrances = 0  # Number of entrances reserved for used_caves
@@ -1721,7 +1724,6 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
 
         # all caves are sorted so that the last exit is always reachable
         rnd_cave = list(cave)
-        shuffle_connector_exits(rnd_cave)  # should be the same as unbiasing some entrances...
         if avail.swapped and exit in swap_forbidden:
             swap_forbidden.remove(exit)
         else:
@@ -1778,10 +1780,12 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
                 used_caves.remove(cave)
             else:
                 required_entrances += len(cave)-1
-            cave_options.append(rnd_cave[0:-1])
+            remainder = rnd_cave[0:-1]
+            prepare_must_exit_exits([remainder])
+            cave_options.append(remainder)
             random.shuffle(cave_options)
-            used_caves.append(rnd_cave[0:-1])
-            invalid_cave_connections[tuple(rnd_cave[0:-1])] = invalid_cave_connections[tuple(cave)].union(invalid_connections[exit])
+            used_caves.append(remainder)
+            invalid_cave_connections[tuple(remainder)] = invalid_cave_connections[tuple(cave)].union(invalid_connections[exit])
         cave_options.remove(cave)
     for cave in used_caves:
         if cave in cave_options:  # check if we placed multiple entrances from this 3 or 4 exit
@@ -1803,6 +1807,7 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
 
 
 def do_mandatory_connections_decoupled(avail, cave_options, must_exit):
+    prepare_must_exit_exits(cave_options)
     for next_entrance in must_exit:
         random.shuffle(cave_options)
         candidate = None
@@ -1817,10 +1822,10 @@ def do_mandatory_connections_decoupled(avail, cave_options, must_exit):
         cave_options.remove(candidate)
 
         # all caves are sorted so that the last exit is always reachable
-        shuffle_connector_exits(candidate)  # should be the same as un-biasing some entrances...
         chosen_exit = candidate[-1]
         cave = candidate[:-1]
         connect_exit(chosen_exit, next_entrance, avail)
+        prepare_must_exit_exits([cave])
         cave_options.append(cave)
         avail.decoupled_entrances.remove(next_entrance)
 
@@ -1837,6 +1842,12 @@ def must_exit_filter(avail, candidates, shuffle_pool):
         elif cand in avail.entrances and cand in shuffle_pool:
             filtered_list.append(cand)
     return filtered_list
+
+
+def prepare_must_exit_exits(cave_options):
+    for cave in cave_options:
+        if not isinstance(cave, str) and len(cave) > 1:
+            shuffle_connector_exits(cave)
 
 
 def shuffle_connector_exits(connector_choices):
