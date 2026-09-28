@@ -1705,7 +1705,26 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
                     break
         return swap_entrance, swap_exit
 
+    def reserve_must_exit_entrances(caves):
+        if not avail.swapped:
+            return
+        for reserve_cave in caves:
+            if isinstance(reserve_cave, str) or len(reserve_cave) < 2:
+                continue
+            for exit_name in reserve_cave:
+                vanilla_entrance = exit_to_vanilla_entrance.get(exit_name)
+                if vanilla_entrance:
+                    reserved_swap_entrances.add(vanilla_entrance)
+
     prepare_must_exit_exits(cave_options)
+
+    reserved_swap_entrances = set()
+    exit_to_vanilla_entrance = {}
+    if avail.swapped:
+        for ent_name, exit_name in avail.combine_map.items():
+            exit_to_vanilla_entrance.setdefault(exit_name, ent_name)
+
+    reserve_must_exit_entrances(cave_options)
 
     # Entrances on a must-exit ledge cannot be the way into a cave until that ledge's connector is finished.
     semi_resolved_entrances = set()
@@ -1755,6 +1774,7 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
             entrance = next(e for e in entrances[::-1] if e not in invalid_connections[exit]
                             and e not in invalid_cave_connections[tuple(cave)] and e not in must_exit
                             and e not in semi_resolved_entrances
+                            and e not in reserved_swap_entrances
                             and (not avail.swapped or rnd_cave[0] != avail.combine_map[e])
                             and bonk_fairy_exception(avail, e))
             entrances.remove(entrance)
@@ -1783,6 +1803,7 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
                 else:
                     entrance = next(e for e in entrances[::-1] if e not in invalid_connections[exit] and e not in must_exit
                                     and e not in semi_resolved_entrances
+                                    and e not in reserved_swap_entrances
                                     and (not avail.swapped or cave_exit != avail.combine_map[e]) and bonk_fairy_exception(avail, e))
                     cave_entrances.append(entrance)
                     entrances.remove(entrance)
@@ -1805,6 +1826,7 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
                 required_entrances += len(cave)-1
             remainder = rnd_cave[0:-1]
             prepare_must_exit_exits([remainder])
+            reserve_must_exit_entrances([remainder])
             cave_options.append(remainder)
             random.shuffle(cave_options)
             used_caves.append(remainder)
@@ -1819,6 +1841,7 @@ def do_mandatory_connections(avail, entrances, cave_options, must_exit):
                 else:
                     entrance = next(e for e in entrances[::-1] if e not in invalid_cave_connections[tuple(cave)]
                                     and e not in semi_resolved_entrances
+                                    and e not in reserved_swap_entrances
                                     and (not avail.swapped or cave_exit != avail.combine_map[e]) and bonk_fairy_exception(avail, e))
                     entrances.remove(entrance)
                     connect_two_way(entrance, cave_exit, avail)
