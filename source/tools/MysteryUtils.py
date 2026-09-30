@@ -131,7 +131,7 @@ def roll_settings(weights):
         ret.ow_layout = 'wild'
         ret.ow_parallel = False
     ret.ow_terrain = get_choice_bool('overworld_terrain')
-    valid_options = {'none': 'none', 'polar': 'polar', 'grouped': 'polar', 'chaos': 'unrestricted', 'unrestricted': 'unrestricted'}
+    valid_options = {'none': 'none', 'polar': 'polar', 'grouped': 'grouped', 'chaos': 'unrestricted', 'unrestricted': 'unrestricted'}
     ret.ow_crossed = get_choice('overworld_crossed')
     ret.ow_crossed = valid_options[ret.ow_crossed] if ret.ow_crossed in valid_options else 'none'
     ret.ow_keepsimilar = get_choice_bool('overworld_keepsimilar')
