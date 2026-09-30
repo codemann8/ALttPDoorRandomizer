@@ -23,6 +23,8 @@ goals:
   pedestal: 1
   triforce-hunt: 1
   trinity: 1
+  ganonhunt: 1
+  completionist: 1
 
 triforce_goal_min: 20
 triforce_goal_max: 30
@@ -107,20 +109,24 @@ hints:
   on: 1
   off: 1
 
-overworld_shuffle:
+overworld_layout:
   vanilla: 5
-  parallel: 1
-  full: 1
+  grid: 2
+  wild: 1
+
+overworld_parallel:
+  on: 1
+  off: 1
 
 overworld_terrain:
   on: 1
   off: 1
 
 overworld_crossed:
-  none: 5
+  none: 8
   polar: 1
   grouped: 1
-  unrestricted: 1
+  unrestricted: 2
 
 overworld_keepsimilar:
   on: 1
