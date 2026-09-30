@@ -14,6 +14,8 @@ def get_weights(path):
             return yaml.load(f, Loader=yaml.SafeLoader)
     elif urllib.parse.urlparse(path).scheme in ['http', 'https']:
         return yaml.load(urllib.request.urlopen(path), Loader=yaml.FullLoader)
+    else:
+        raise FileNotFoundError(f"Settings file not found: '{path}'")
 
 def roll_settings(weights):
     while True:
