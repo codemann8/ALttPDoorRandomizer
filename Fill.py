@@ -112,8 +112,8 @@ def fill_dungeons_restrictive(world, shuffled_locations):
             hybrid_state_base = all_state_base.copy()
             for x in bigs + smalls + prizes + others:
                 hybrid_state_base.collect(x, True)
-            hybrid_smalls = [ItemFactory('Small Key (Swamp Palace)', player)] * 2
-            fill(hybrid_state_base, hybrid_smalls, hybrid_locations, unplaced_smalls)
+            hybrid_smalls = [ItemFactory('Small Key (Swamp Palace)', player) for _ in range(2)]
+            fill_restrictive(world, hybrid_state_base, hybrid_locations, hybrid_smalls, unplaced_smalls, True)
 
     bigs_copy, smalls_copy = list(bigs), list(smalls)
     big_state_base = all_state_base.copy()
@@ -1213,7 +1213,7 @@ def balance_money_progression(world):
                 slot = shop_to_location_table[location.parent_region.name].index(location.name)
                 shop = location.parent_region.shop
                 shop_item = shop.inventory[slot]
-                if shop_item and location.item and interesting_item(location, location.item, world, location.item.player):
+                if shop_item and location.item and not location.locked and interesting_item(location, location.item, world, location.item.player):
                     if location.item.name.startswith('Rupee') and loc_player == location.item.player:
                         if location.item.name in rupee_chart and shop_item['price'] < rupee_chart[location.item.name]:
                             wallet[loc_player] -= shop_item['price']  # will get picked up in the location_free block

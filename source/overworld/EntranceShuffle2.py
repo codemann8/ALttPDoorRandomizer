@@ -3013,7 +3013,7 @@ mandatory_connections = [('Lost Woods Hideout (top to bottom)', 'Lost Woods Hide
                          ('Lumberjack Tree (top to bottom)', 'Lumberjack Tree (bottom)'),
                          ('Death Mountain Return Cave E', 'Death Mountain Return Cave (right)'),
                          ('Death Mountain Return Cave W', 'Death Mountain Return Cave (left)'),
-                         ('Old Man Cave Dropdown', 'Old Man Cave (East)'),
+                         ('Old Man Cave Dropdown', 'Old Man Cave (West)'),
                          ('Old Man Cave W', 'Old Man Cave (West)'),
                          ('Old Man Cave E', 'Old Man Cave (East)'),
                          ('Spectacle Rock Cave Drop', 'Spectacle Rock Cave Pool'),

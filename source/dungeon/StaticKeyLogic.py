@@ -79,12 +79,15 @@ DOOR_RULES = {
 
 def static_logic_supported(world, player):
     return (world.doorShuffle[player] == 'vanilla' and world.dropshuffle[player] == 'none'
-            and world.pottery[player] in ('none', 'cave'))
+            and world.pottery[player] in ('none', 'cave')
+            # key drops count as free, so no drop enemy may need a special weapon
+            and (world.enemy_shuffle[player] == 'none' or world.any_enemy_logic[player] == 'none'))
 
 
 def static_door_rules(world, player):
     if not static_logic_supported(world, player):
-        raise Exception('static key logic needs vanilla doors, unshuffled key drops and unshuffled key pots')
+        raise Exception('static key logic needs vanilla doors, unshuffled key drops, unshuffled key pots, '
+                        'and any_enemy_logic: none when enemies are shuffled')
     specs = {}
     for doors in DOOR_RULES.values():
         for door, spec in doors.items():
@@ -238,6 +241,7 @@ def set_turtle_rock_rules(world, player, keys, small_key_at, allow_small, forbid
         allow_small(tr, chest)
     elif front and middle:
         set_rule(loc(chest), keys_for_chest_item())
+        allow_door_with_small_key_at(world, player, 'TR Pokey 2 ES', loc(chest))
         allow_small(tr, chest)
         no_big_key += ['Turtle Rock - Crystaroller Room'] + TR_EYE_BRIDGE
     elif front:
