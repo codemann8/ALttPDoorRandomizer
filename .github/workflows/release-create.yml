@@ -36,8 +36,8 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-12
-          macos-26-intel,
+          # macos-latest,  # macos-26
+          macos-26,
           windows-latest # windows-2022
         ]
         #TODO: Python Version to run on
@@ -95,8 +95,8 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-12
-          macos-26-intel,
+          # macos-latest,  # macos-26
+          macos-26,
           windows-latest # windows-2022
         ]
         #TODO: Python Version to run on
@@ -171,8 +171,8 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-12
-          macos-26-intel,
+          # macos-latest,  # macos-26
+          macos-26,
           windows-latest # windows-2022
         ]
         #TODO: Python Version to run on
@@ -213,8 +213,8 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-12
-          macos-26-intel,
+          # macos-latest,  # macos-26
+          macos-26,
           windows-latest # windows-2022
         ]
         python-version: [ "3.12" ]
@@ -286,7 +286,7 @@ jobs:
       - name: 🔽Download MacOS Archive Artifact
         uses: actions/download-artifact@v4.1.7
         with:
-          name: archive-macos-26-intel-py${{ matrix.python-version }}
+          name: archive-macos-26-py${{ matrix.python-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/deploy/macos
 
       # download windows archive artifact
