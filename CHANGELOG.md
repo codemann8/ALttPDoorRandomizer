@@ -1,5 +1,8 @@
 # Changelog
 
+# 0.8.0.3
+- \~Merged in DR v1.5.8~
+
 # 0.8.0.2
 - Paradox Cave pearl rule is removed
 - DM Descent Cave pearl rule only applies if Inverted 2.0 and not advanced ER modes (vanilla or semi-vanilla placed DM Descent cave)
