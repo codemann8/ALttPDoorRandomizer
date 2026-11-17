@@ -44,7 +44,7 @@ from source.rom.DataTables import init_data_tables
 from source.limited.LimitedRunCoordinator import adjust_world_for_limited_runs
 from source.rom.DataTables import init_data_tables, init_custom_rooms, init_custom_sprites
 
-version_number = '1.5.8'
+version_number = '1.5.10'
 version_branch = '-u'
 __version__ = f'{version_number}{version_branch}'
 
@@ -62,7 +62,8 @@ def check_python_version():
         logging.warning(BabelFish().translate("cli","cli","old.python.version"), sys.version)
 
 
-def main(args, seed=None, fish=None):
+def main(args, seed=None, fish=None, progress=None):
+    """Generate a seed. progress, if given, is called with each stage key as generation reaches it."""
     check_python_version()
 
     if args.print_template_yaml:
@@ -90,6 +91,12 @@ def main(args, seed=None, fish=None):
     for i in zip(args.logic.values(), args.door_shuffle.values()):
         if i[0] == 'hybridglitches' and i[1] != 'vanilla':
             raise RuntimeError(BabelFish().translate("cli","cli","hybridglitches.door.shuffle"))
+
+    def stage(key):
+        logger.info(world.fish.translate("cli", "cli", key))
+        if progress:
+            progress(key)
+
     if seed is None:
         random.seed(None)
         world.seed = random.randint(0, 999999999)
@@ -141,7 +148,7 @@ def main(args, seed=None, fish=None):
     world.settings.create_from_world(world, args)
 
     if world.spoiler_mode != 'none' and not args.jsonout:
-        logger.info(world.fish.translate("cli", "cli", "create.meta"))
+        stage("create.meta")
         world.spoiler.meta_to_file(output_path(f'{outfilebase}_Spoiler.txt'))
     if args.mystery and not args.suppress_meta:
         world.spoiler.mystery_meta_to_file(output_path(f'{outfilebase}_meta.txt'))
@@ -167,7 +174,7 @@ def main(args, seed=None, fish=None):
         adjust_locations(world, player)
 
     if any(world.potshuffle.values()):
-        logger.info(world.fish.translate("cli", "cli", "shuffling.pots"))
+        stage("shuffling.pots")
         for player in range(1, world.players + 1):
             if world.potshuffle[player]:
                 if world.pottery[player] in ['none', 'cave', 'keys', 'cavekeys']:
@@ -175,7 +182,7 @@ def main(args, seed=None, fish=None):
                 else:
                     shuffle_pot_switches(world, player)
 
-    logger.info(world.fish.translate("cli","cli","shuffling.overworld"))
+    stage("shuffling.overworld")
 
     for player in range(1, world.players + 1):
         link_overworld(world, player)
@@ -184,25 +191,25 @@ def main(args, seed=None, fish=None):
 
     init_districts(world)
 
-    logger.info(world.fish.translate("cli","cli","shuffling.world"))
+    stage("shuffling.world")
 
     for player in range(1, world.players + 1):
         link_entrances_new(world, player)
 
-    logger.info(world.fish.translate("cli", "cli", "shuffling.prep"))
+    stage("shuffling.prep")
 
     for player in range(1, world.players + 1):
         link_doors_prep(world, player)
 
     create_item_pool_config(world)
 
-    logger.info(world.fish.translate("cli", "cli", "shuffling.dungeons"))
+    stage("shuffling.dungeons")
 
     for player in range(1, world.players + 1):
         link_doors(world, player)
         mark_light_dark_world_regions(world, player)
 
-    logger.info(world.fish.translate("cli", "cli", "generating.itempool"))
+    stage("generating.itempool")
 
     for player in range(1, world.players + 1):
         set_prize_drops(world, player)
@@ -215,7 +222,7 @@ def main(args, seed=None, fish=None):
         generate_itempool(world, player)
 
     verify_item_pool_config(world)
-    logger.info(world.fish.translate("cli","cli","calc.access.rules"))
+    stage("calc.access.rules")
 
     for player in range(1, world.players + 1):
         set_rules(world, player)
@@ -233,11 +240,11 @@ def main(args, seed=None, fish=None):
         shuffle_event_items(world, player)
 
     massage_item_pool(world)
-    logger.info(world.fish.translate("cli", "cli", "placing.dungeon.prizes"))
+    stage("placing.dungeon.prizes")
 
     fill_prizes(world)
 
-    logger.info(world.fish.translate("cli","cli","placing.dungeon.items"))
+    stage("placing.dungeon.items")
 
     if args.algorithm != 'equitable':
         shuffled_locations = world.get_unfilled_locations()
@@ -260,12 +267,12 @@ def main(args, seed=None, fish=None):
                       )
                     )
 
-    logger.info(world.fish.translate("cli","cli","fill.world"))
+    stage("fill.world")
 
     distribute_items_restrictive(world, True)
 
     if world.players > 1:
-        logger.info(world.fish.translate("cli", "cli", "balance.multiworld"))
+        stage("balance.multiworld")
         if args.algorithm in ['balanced', 'equitable']:
             balance_multiworld_progression(world)
 
@@ -293,7 +300,7 @@ def main(args, seed=None, fish=None):
     rom_names = []
     jsonout = {}
     if not args.suppress_rom or args.bps:
-        logger.info(world.fish.translate("cli","cli","patching.rom"))
+        stage("patching.rom")
         for team in range(world.teams):
             for player in range(1, world.players + 1):
                 limited_run_flag = None if world.limited_run[player] == 'none' else world.limited_run[player]
@@ -355,7 +362,7 @@ def main(args, seed=None, fish=None):
     elif world.spoiler_mode != 'none' and not args.jsonout:
         world.spoiler.hashes_to_file(output_path(f'{outfilebase}_Spoiler.txt'))
     if world.spoiler_mode != 'none' and not args.jsonout:
-        logger.info(world.fish.translate("cli", "cli", "patching.spoiler"))
+        stage("patching.spoiler")
         world.spoiler.to_file(output_path(f'{outfilebase}_Spoiler.txt'))
         if 'debug' in world.spoiler.settings:
             world.spoiler.extras(output_path(f'{outfilebase}_Spoiler.txt'))
@@ -365,13 +372,13 @@ def main(args, seed=None, fish=None):
         args.skip_playthrough = True
 
     if not args.skip_playthrough:
-        logger.info(world.fish.translate("cli","cli","calc.playthrough"))
+        stage("calc.playthrough")
         create_playthrough(world)
 
     if args.jsonout:
         print(json.dumps({**jsonout, 'spoiler': world.spoiler.to_json()}))
     elif world.spoiler_mode != 'none':
-        logger.info(world.fish.translate("cli","cli","patching.spoiler"))
+        stage("patching.spoiler")
         if args.jsonout:
             with open(output_path('%s_Spoiler.json' % outfilebase), 'w') as outfile:
               outfile.write(world.spoiler.to_json())
@@ -381,7 +388,7 @@ def main(args, seed=None, fish=None):
     YES = world.fish.translate("cli","cli","yes")
     NO = world.fish.translate("cli","cli","no")
     logger.info("")
-    logger.info(world.fish.translate("cli","cli","done"))
+    stage("done")
     logger.info("")
     logger.info(world.fish.translate("cli","cli","made.rom") % (YES if (args.create_rom) else NO))
     logger.info(world.fish.translate("cli","cli","made.playthrough") % (YES if (args.calc_playthrough) else NO))
