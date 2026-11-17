@@ -1267,6 +1267,7 @@ def patch_rom(world, rom, player, team, is_mystery=False, rom_header=None):
     rom.write_byte(0x1800A1, 0x00 if world.logic[player] in ['hybridglitches', 'nologic'] else 0x01)  # enable overworld screen transition draining for water level inside swamp
     rom.write_byte(0x180174, 0x01 if world.fix_fake_world[player] else 0x00)
     rom.write_byte(0x18017E, 0x01) # Fairy fountains only trade in bottles
+    rom.write_byte(0x187033, 0x02 if world.enemy_shuffle[player] != 'none' else 0x00)  # offer spawn points during old man quest
 
     # Starting equipment
     if world.pseudoboots[player]:
