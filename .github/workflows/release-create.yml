@@ -36,8 +36,7 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-26
-          macos-26,
+          macos-latest,  # macos-12
           windows-latest # windows-2022
         ]
         #TODO: Python Version to run on
@@ -95,8 +94,7 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-26
-          macos-26,
+          macos-latest,  # macos-12
           windows-latest # windows-2022
         ]
         #TODO: Python Version to run on
@@ -171,8 +169,7 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-26
-          macos-26,
+          macos-latest,  # macos-12
           windows-latest # windows-2022
         ]
         #TODO: Python Version to run on
@@ -213,8 +210,7 @@ jobs:
         os-name: [
           # ubuntu-latest,  # ubuntu-22.04
           ubuntu-22.04,
-          # macos-latest,  # macos-26
-          macos-26,
+          macos-latest,  # macos-12
           windows-latest # windows-2022
         ]
         python-version: [ "3.12" ]
@@ -286,7 +282,7 @@ jobs:
       - name: 🔽Download MacOS Archive Artifact
         uses: actions/download-artifact@v4.1.7
         with:
-          name: archive-macos-26-py${{ matrix.python-version }}
+          name: archive-macos-latest-py${{ matrix.python-version }}
           path: ${{ steps.parentDir.outputs.parentDir }}/deploy/macos
 
       # download windows archive artifact
@@ -378,7 +374,7 @@ jobs:
           asset_path: ${{ steps.parentDir.outputs.parentDir }}/deploy/linux/${{ steps.identify-linux-asset.outputs.asset_linux }}
           asset_name: ${{ steps.debug_info.outputs.asset_prefix }}-linux-focal.tar.gz
           asset_content_type: application/gzip
-        if: contains(github.event.head_commit.message, 'Merge branch') || contains(github.event.head_commit.message, 'Version bump')
+        if: steps.create_release.outcome == 'success'
 
       # upload macos archive asset (OverworldShuffle)
       #TODO: Make sure we're firing on the proper branches
@@ -392,7 +388,7 @@ jobs:
           asset_path: ${{ steps.parentDir.outputs.parentDir }}/deploy/macos/${{ steps.identify-macos-asset.outputs.asset_macos }}
           asset_name: ${{ steps.debug_info.outputs.asset_prefix }}-osx.tar.gz
           asset_content_type: application/gzip
-        if: contains(github.event.head_commit.message, 'Merge branch') || contains(github.event.head_commit.message, 'Version bump')
+        if: steps.create_release.outcome == 'success'
 
       # upload windows archive asset (OverworldShuffle)
       #TODO: Make sure we're firing on the proper branches
@@ -406,7 +402,7 @@ jobs:
           asset_path: ${{ steps.parentDir.outputs.parentDir }}/deploy/windows/${{ steps.identify-windows-asset.outputs.asset_windows }}
           asset_name: ${{ steps.debug_info.outputs.asset_prefix }}-windows.zip
           asset_content_type: application/zip
-        if: contains(github.event.head_commit.message, 'Merge branch') || contains(github.event.head_commit.message, 'Version bump')
+        if: steps.create_release.outcome == 'success'
 
       # - name: 🖳Tag Baserom
       #   uses: ./.github/actions/tag-repo
