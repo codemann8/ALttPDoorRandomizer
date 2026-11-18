@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.8.0.4
+- Old Man Rescue softlock prevention with enemizer
+- \~Merged in DR v1.5.10~
+
 # 0.8.0.3
 - \~Merged in DR v1.5.8~
 
